@@ -1,9 +1,9 @@
 {
   "locais": [
     {
-    "locationName": "Café, São Sebastião da Grama",
+    "locationName": "São Sebastião da Grama",
     "backgroundMusicPath": "Audio/trilhasonora_cafe",
-    "mapImagePath": "UI/Mapas/mapa_cafe", 
+    "mapImagePath": "UI/Mapas/mapa_cafe",
     "desafios": [
       {
         "panoramaMasterialPath": "",
@@ -37,9 +37,9 @@
         "initialYRotation": 180,
         "questionText": "Qual o nome do selo de Indicação Geográfica (IG) do café de São Sebastião da Grama?",
         "answers": [
-          "IP Planalto de Grama",
-          "IP Terras Altas da Mogiana",
-          "IP Vale da Grama"
+          "Planalto de Grama",
+          "Terras Altas da Mogiana",
+          "Vale da Grama"
         ],
         "correctAnswerIndex": 2
       },
@@ -72,7 +72,7 @@
         "answers": [
           "Centro geográfico e histórico",
           "Área de preservação ambiental",
-          "Polo exclusivamente comercial"
+          "Sem importância social"
         ],
         "correctAnswerIndex": 0
       },
@@ -89,6 +89,5 @@
       }
     ]
   }
-  ]
+]
 }
-  

@@ -3,38 +3,34 @@ using UnityEngine.Video;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace OdisseiaVR.Tour
+public class Desafio
 {
-    // --- ESTRUTURAS DE DADOS PARA O RUNTIME (O QUE O JOGO USA) ---
-    public class Desafio
-{
-    public VideoClip videoClip;
     public Material panoramaMaterial;
+    public VideoClip videoClip;
     public float initialYRotation;
     public string questionText;
     public List<string> answers;
     public int correctAnswerIndex;
+
+    public bool IsVideo => videoClip != null;
 }
 
 public class DadosLocal
 {
     public string locationName;
     public AudioClip backgroundMusic;
-    public List<Desafio> desafios;
+    public List<Desafio> desafios = new List<Desafio>();
 }
-
-// --- ESTRUTURAS DE DADOS PARA O JSON (O QUE O ARQUIVO CONTÉM) ---
 
 [System.Serializable]
 public class DesafioJson
 {
     public string panoramaMaterialPath;
+    public string videoPath; // Nova propriedade mapeada do JSON
     public float initialYRotation;
     public string questionText;
     public List<string> answers;
     public int correctAnswerIndex;
-    public string videoClipPath;
-    public string videoPath; // legacy key support (videoPath)
 }
 
 [System.Serializable]
@@ -50,134 +46,102 @@ public class DadosLocalJson
 public class TourDataJson
 {
     public List<DadosLocalJson> locais;
-    }
+}
 
-    /// <summary>
-    /// RESPONSABILIDADE: Carregar todos os dados do JSON e assets (Materiais, Áudios)
-    /// da pasta Resources de forma assíncrona.
-    /// </summary>
-    public class TourDataManager : MonoBehaviour
+public class TourDataManager : MonoBehaviour
 {
     [Header("Arquivo de Conteúdo")]
-    [Tooltip("Arraste aqui o arquivo JSON que contém os dados dos tours.")]
     public TextAsset tourDataJson;
 
-    // Propriedade pública para o TourManager acessar os dados carregados
     public List<DadosLocal> Locais { get; private set; } = new List<DadosLocal>();
+    public bool IsDataLoaded { get; private set; } = false;
 
-    /// <summary>
-    /// Corrotina principal que carrega todos os dados assincronamente.
-    /// O TourManager irá esperar por esta corrotina.
-    /// </summary>
-    public IEnumerator LoadTourDataFromJSONAsync()
+    private void Start()
     {
-        if (tourDataJson == null)
+        if (tourDataJson != null)
         {
-            Debug.LogError("ERRO CRÍTICO: O arquivo 'tourDataJson' não foi atribuído no TourDataManager!");
-            yield break; // Para a corrotina
+            StartCoroutine(CarregarDadosAsync(tourDataJson.text));
         }
+        else
+        {
+            Debug.LogError("[TourDataManager] Arquivo JSON não foi atribuído no Inspector!");
+        }
+    }
 
-        TourDataJson dataFromJson;
-        try
-        {
-            dataFromJson = JsonUtility.FromJson<TourDataJson>(tourDataJson.text);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"Falha ao desserializar o JSON: {ex.Message}");
-            yield break;
-        }
-        if (dataFromJson == null || dataFromJson.locais == null)
-        {
-            Debug.LogError("Falha ao desserializar o JSON ou nenhum local definido.");
-            yield break;
-        }
+    private IEnumerator CarregarDadosAsync(string jsonTexto)
+    {
+        TourDataJson dadosJson = JsonUtility.FromJson<TourDataJson>(jsonTexto);
         Locais.Clear();
 
-        foreach (var localJson in dataFromJson.locais)
+        foreach (var localJson in dadosJson.locais)
         {
-            DadosLocal novoLocal = new DadosLocal
-            {
-                locationName = localJson.locationName,
-                desafios = new List<Desafio>()
-            };
+            DadosLocal novoLocal = new DadosLocal { locationName = localJson.locationName };
 
-            // --- Carregamento Assíncrono do Áudio ---
-            if (!string.IsNullOrEmpty(localJson.backgroundMusicPath))
+            // Carrega a música de forma assíncrona
+            string pathMusica = SanitizarCaminhoAsset(localJson.backgroundMusicPath);
+            if (!string.IsNullOrEmpty(pathMusica))
             {
-                ResourceRequest audioRequest = Resources.LoadAsync<AudioClip>(localJson.backgroundMusicPath);
-                yield return audioRequest; // Espera o carregamento terminar
-
-                if (audioRequest.asset != null)
-                {
-                    novoLocal.backgroundMusic = audioRequest.asset as AudioClip;
-                }
-                else
-                {
-                    Debug.LogWarning($"Asset de Áudio não encontrado em 'Resources/{localJson.backgroundMusicPath}' para o local '{novoLocal.locationName}'");
-                }
+                ResourceRequest reqMusica = Resources.LoadAsync<AudioClip>(pathMusica);
+                yield return reqMusica;
+                novoLocal.backgroundMusic = reqMusica.asset as AudioClip;
             }
 
-            // --- Carregamento Assíncrono dos Desafios ---
-            if (localJson.desafios == null)
+            foreach (var desJson in localJson.desafios)
             {
-                Debug.LogWarning($"Local '{localJson.locationName}' não possui desafios definidos no JSON.");
-            }
-            else
-            {
-                foreach(var desafioJson in localJson.desafios)
+                Desafio novoDesafio = new Desafio
                 {
-                    if (desafioJson == null) continue;
+                    initialYRotation = desJson.initialYRotation,
+                    questionText = desJson.questionText,
+                    answers = new List<string>(desJson.answers),
+                    correctAnswerIndex = desJson.correctAnswerIndex
+                };
 
-                    Desafio novoDesafio = new Desafio
-                    {
-                        initialYRotation = desafioJson.initialYRotation,
-                        questionText = desafioJson.questionText ?? string.Empty,
-                        answers = desafioJson.answers ?? new List<string>(),
-                        // Preserve -1 for non-quiz (no answers); otherwise clamp to valid range.
-                        correctAnswerIndex = (desafioJson.answers == null || desafioJson.answers.Count == 0)
-                            ? -1
-                            : Mathf.Clamp(desafioJson.correctAnswerIndex, 0, desafioJson.answers.Count - 1)
-                    };
-
-                    // --- Carregamento Assíncrono do Material ---
-                    if (!string.IsNullOrEmpty(desafioJson.panoramaMaterialPath))
-                    {
-                        ResourceRequest materialRequest = Resources.LoadAsync<Material>(desafioJson.panoramaMaterialPath);
-                        yield return materialRequest; // Espera o carregamento terminar
-
-                        if (materialRequest.asset != null)
-                        {
-                            novoDesafio.panoramaMaterial = materialRequest.asset as Material;
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"Asset de Material não encontrado em 'Resources/{desafioJson.panoramaMaterialPath}' para o local '{novoLocal.locationName}'");
-                        }
-                    }
-
-                    // --- Carregamento Assíncrono do Vídeo ---
-                    string videoPathToLoad = !string.IsNullOrEmpty(desafioJson.videoClipPath) ? desafioJson.videoClipPath : (desafioJson.videoPath ?? string.Empty);
-                    if (!string.IsNullOrEmpty(videoPathToLoad))
-                    {
-                        ResourceRequest videoRequest = Resources.LoadAsync<VideoClip>(videoPathToLoad);
-                        yield return videoRequest;
-
-                        if (videoRequest.asset != null)
-                        {
-                            novoDesafio.videoClip = videoRequest.asset as VideoClip;
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"Asset de Vídeo não encontrado em 'Resources/{videoPathToLoad}' para o local '{novoLocal.locationName}'");
-                        }
-                    }
-
-                    novoLocal.desafios.Add(novoDesafio);
+                // Carrega Material 360 de forma assíncrona
+                string pathMat = SanitizarCaminhoAsset(desJson.panoramaMaterialPath);
+                if (!string.IsNullOrEmpty(pathMat))
+                {
+                    ResourceRequest reqMat = Resources.LoadAsync<Material>(pathMat);
+                    yield return reqMat;
+                    novoDesafio.panoramaMaterial = reqMat.asset as Material;
                 }
+
+                // Carrega Vídeo de forma assíncrona
+                string pathVid = SanitizarCaminhoAsset(desJson.videoPath);
+                if (!string.IsNullOrEmpty(pathVid))
+                {
+                    ResourceRequest reqVid = Resources.LoadAsync<VideoClip>(pathVid);
+                    yield return reqVid;
+                    novoDesafio.videoClip = reqVid.asset as VideoClip;
+                }
+
+                novoLocal.desafios.Add(novoDesafio);
             }
             Locais.Add(novoLocal);
         }
+
+        IsDataLoaded = true;
+        Debug.Log("[TourDataManager] Carga Assíncrona de Assets concluída com sucesso.");
     }
-}
+
+    private string SanitizarCaminhoAsset(string caminhoOriginal)
+    {
+        if (string.IsNullOrEmpty(caminhoOriginal)) return string.Empty;
+        string caminhoSanitizado = caminhoOriginal.Trim();
+        int pontoIndex = caminhoSanitizado.LastIndexOf('.');
+        if (pontoIndex > 0)
+        {
+            caminhoSanitizado = caminhoSanitizado.Substring(0, pontoIndex);
+        }
+        return caminhoSanitizado;
+    }
+
+    public void LimparAssetsCarregados()
+    {
+        Locais.Clear();
+        IsDataLoaded = false;
+        Resources.UnloadUnusedAssets();
+        System.GC.Collect();
+    }
+
+    private void OnDestroy() => LimparAssetsCarregados();
 }
