@@ -1,12 +1,12 @@
 {
-  "locais": [
+  "locais": [    
     {
     "locationName": "IP Vale da Grama - São Sebastião da Grama",
     "backgroundMusicPath": "Audio/trilhasonora_cafe",
     "mapImagePath": "UI/Mapas/mapa_cafe",
     "desafios": [
       {
-        "panoramaMasterialPath": "",
+        "panoramaMaterialPath": "",
         "videoPath": "Video/Video_Prefeito",
         "initialYRotation": 0.0,
         "questionText": "",

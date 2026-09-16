@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace OdisseiaVR.Core
 {
@@ -18,7 +19,12 @@ namespace OdisseiaVR.Core
         private Image image;
         private TextMeshProUGUI messageText;
         private GameObject messageGO;
+        private Image progressBarBackground;
+        private Image progressBarFill;
         private float pendingFadeOutDuration = -1f;
+
+        // Guarda os Canvas que foram desativados durante a transição para restaurá-los depois.
+        private readonly List<Canvas> hiddenCanvases = new List<Canvas>();
 
         void Awake()
         {
@@ -47,13 +53,15 @@ namespace OdisseiaVR.Core
             // Canvas no GameObject raiz
             canvas = gameObject.GetComponent<Canvas>();
             if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.renderMode = RenderMode.WorldSpace;
             canvas.sortingOrder = 99999;
+            RectTransform canvasRt = canvas.GetComponent<RectTransform>();
+            canvasRt.sizeDelta = new Vector2(1920, 1080);
 
             // CanvasScaler para escalar corretamente em telas diferentes
             CanvasScaler cs = gameObject.GetComponent<CanvasScaler>();
             if (cs == null) cs = gameObject.AddComponent<CanvasScaler>();
-            cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            cs.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
 
             // Adiciona GraphicRaycaster para garantir renderização UI correta
             if (gameObject.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
@@ -91,6 +99,67 @@ namespace OdisseiaVR.Core
 
             // Garante que a mensagem fique acima da imagem de fade
             messageGO.transform.SetAsLastSibling();
+            // Fundo da barra de progresso
+            GameObject barBgGO = new GameObject("ProgressBarBackground");
+            barBgGO.transform.SetParent(this.transform, false);
+            progressBarBackground = barBgGO.AddComponent<Image>();
+            progressBarBackground.color = new Color(1f, 1f, 1f, 0.15f);
+            progressBarBackground.raycastTarget = false;
+
+            RectTransform barBgRt = barBgGO.GetComponent<RectTransform>();
+            barBgRt.anchorMin = new Vector2(0.5f, 0.5f);
+            barBgRt.anchorMax = new Vector2(0.5f, 0.5f);
+            barBgRt.sizeDelta = new Vector2(800f, 40f);
+            barBgRt.anchoredPosition = new Vector2(0f, -260f); // abaixo da mensagem
+
+            // Preenchimento da barra
+            GameObject barFillGO = new GameObject("ProgressBarFill");
+            barFillGO.transform.SetParent(barBgGO.transform, false);
+            progressBarFill = barFillGO.AddComponent<Image>();
+            progressBarFill.color = Color.white;
+            progressBarFill.raycastTarget = false;
+            progressBarFill.type = Image.Type.Filled;
+            progressBarFill.fillMethod = Image.FillMethod.Horizontal;
+            progressBarFill.fillAmount = 0f;
+
+            RectTransform barFillRt = barFillGO.GetComponent<RectTransform>();
+            barFillRt.anchorMin = Vector2.zero;
+            barFillRt.anchorMax = Vector2.one;
+            barFillRt.offsetMin = Vector2.zero;
+            barFillRt.offsetMax = Vector2.zero;
+
+            barBgGO.SetActive(false); // começa escondida; ShowProgressBar(true) ativa quando precisar
+        }
+
+        /// <summary>
+        /// Esconde todos os outros Canvas ativos da cena (exceto o próprio Canvas do fade).
+        /// </summary>
+        private void HideAllSceneUI()
+        {
+            hiddenCanvases.Clear();
+
+            Canvas[] todosOsCanvas = Object.FindObjectsOfType<Canvas>();
+            foreach (Canvas c in todosOsCanvas)
+            {
+                if (c == null || c == canvas) continue;
+                if (c.enabled)
+                {
+                    c.enabled = false;
+                    hiddenCanvases.Add(c);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Restaura a visibilidade de todos os Canvas escondidos por HideAllSceneUI().
+        /// </summary>
+        private void RestoreAllSceneUI()
+        {
+            foreach (Canvas c in hiddenCanvases)
+            {
+                if (c != null) c.enabled = true;
+            }
+            hiddenCanvases.Clear();
         }
 
         /// <summary>
@@ -114,6 +183,8 @@ namespace OdisseiaVR.Core
             image.color = new Color(0f, 0f, 0f, 1f);
             gameObject.SetActive(true);
             if (canvas != null) canvas.sortingOrder = 99999;
+
+            HideAllSceneUI();
         }
 
         /// <summary>
@@ -137,6 +208,18 @@ namespace OdisseiaVR.Core
             messageText.gameObject.SetActive(false);
         }
 
+        public void ShowProgressBar(bool show)
+        {
+            if (progressBarBackground == null) return;
+            progressBarBackground.gameObject.SetActive(show);
+        }
+
+        public void SetProgress(float value01)
+        {
+            if (progressBarFill == null) return;
+            progressBarFill.fillAmount = Mathf.Clamp01(value01);
+        }
+
         /// <summary>
         /// Marca para dar fade out automaticamente após o próximo carregamento de cena.
         /// </summary>
@@ -147,7 +230,8 @@ namespace OdisseiaVR.Core
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            // Esconde a mensagem assim que a nova cena foi carregada
+            RestoreAllSceneUI();
+            AttachToActiveCamera();
             ClearMessage();
 
             if (pendingFadeOutDuration >= 0f)
@@ -155,6 +239,22 @@ namespace OdisseiaVR.Core
                 StartCoroutine(FadeToTransparentAndDisableCoroutine(pendingFadeOutDuration));
                 pendingFadeOutDuration = -1f;
             }
+        }
+
+        private void AttachToActiveCamera()
+        {
+            Camera cam = Camera.main;
+            if (cam == null)
+            {
+                Debug.LogWarning("[PersistentFade] Nenhuma câmera com tag MainCamera encontrada na cena.");
+                return;
+            }
+
+            canvas.worldCamera = cam;
+            transform.SetParent(cam.transform, false);
+            transform.localPosition = new Vector3(0f, 0f, 0.4f);
+            transform.localRotation = Quaternion.identity;
+            transform.localScale = Vector3.one * 0.0008f; // ajuste testando no Quest
         }
 
         /// <summary>
@@ -184,8 +284,10 @@ namespace OdisseiaVR.Core
             final.a = 0f;
             image.color = final;
 
+            RestoreAllSceneUI();
             // Garante que a mensagem esteja escondida antes de desativar
             ClearMessage();
+            ShowProgressBar(false);
             gameObject.SetActive(false);
         }
 
@@ -212,6 +314,8 @@ namespace OdisseiaVR.Core
             Color final = image.color;
             final.a = 1f;
             image.color = final;
+
+            HideAllSceneUI();
         }
     }
 }
