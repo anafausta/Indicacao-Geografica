@@ -1694,7 +1694,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.7433963, g: 0.7433963, b: 0.7433963, a: 1}
+    m_HighlightedColor: {r: 0.62352943, g: 0.6156863, b: 0.6156863, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -1815,7 +1815,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.7433963, g: 0.7433963, b: 0.7433963, a: 1}
+    m_HighlightedColor: {r: 0.62352943, g: 0.6156863, b: 0.6156863, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -2962,7 +2962,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.7433963, g: 0.7433963, b: 0.7433963, a: 1}
+    m_HighlightedColor: {r: 0.62352943, g: 0.6156863, b: 0.6156863, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -3584,8 +3584,6 @@ GameObject:
   - component: {fileID: 2079185403}
   - component: {fileID: 2079185404}
   - component: {fileID: 2079185405}
-  - component: {fileID: 2079185407}
-  - component: {fileID: 2079185406}
   - component: {fileID: 2079185408}
   m_Layer: 0
   m_Name: TourManager
@@ -3623,9 +3621,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractiveTourManager
   dataManager: {fileID: 70119903}
   uiManager: {fileID: 306692897}
-  audioSource: {fileID: 0}
+  audioSource: {fileID: 2079185405}
   videoPlayer: {fileID: 2079185408}
+  correctSFX: {fileID: 8300000, guid: 781b23ab90125464683119158df79613, type: 3}
+  incorrectSFX: {fileID: 8300000, guid: 0f968be12522aa147beabdb4c43064e1, type: 3}
+  victorySFX: {fileID: 8300000, guid: 5b60df24c001b254297272406e46bdbc, type: 3}
   panoramaSphereRenderer: {fileID: 306161662}
+  videoMaterialTemplate: {fileID: 2100000, guid: 66ff65ca21647f04ebcee86eebe95ecb, type: 2}
   lobbySceneName: LobbyScene
   feedbackDelay: 1.5
   questionFadeDuration: 0.5
@@ -3728,43 +3730,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &2079185406
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2079185402}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 998a827078ddafb468f93aad818a3a08, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TourUIManager
-  questionTextUI: {fileID: 1860373196}
-  answerButtons:
-  - {fileID: 1864422954}
-  - {fileID: 1117184861}
-  - {fileID: 961453641}
-  menuButton: {fileID: 868665921}
-  fadeScreen: {fileID: 697657310}
-  transitionTextUI: {fileID: 1695532270}
-  correctColor: {r: 0.1, g: 0.7, b: 0.2, a: 1}
-  incorrectColor: {r: 0.8, g: 0.2, b: 0.1, a: 1}
-  loadingTextUI: {fileID: 0}
-  loadingPanel: {fileID: 0}
---- !u!114 &2079185407
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2079185402}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 414c54f8223860a47bd627398c6ad0ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TourDataManager
-  tourDataJson: {fileID: 4900000, guid: 64e996f4178403c489eb0896754e0ce3, type: 3}
 --- !u!328 &2079185408
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -3780,7 +3745,7 @@ VideoPlayer:
   m_TargetTexture: {fileID: 0}
   m_TimeReference: 0
   m_TargetMaterialRenderer: {fileID: 306161662}
-  m_TargetMaterialProperty: _BaseMap
+  m_TargetMaterialProperty: _MainTex
   m_RenderMode: 3
   m_AspectRatio: 2
   m_DataSource: 0
@@ -3969,6 +3934,26 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4263282804483802987, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.999962
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263282804483802987, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263282804483802987, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.008726465
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263282804483802987, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4263282804483802987, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 5137517296985922414, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
       propertyPath: m_Move
       value: 
@@ -4040,6 +4025,10 @@ PrefabInstance:
     - target: {fileID: 8180629566372457772, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
       propertyPath: m_Name
       value: XR Origin (XR Rig)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8180629566372457772, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
+      propertyPath: m_TagString
+      value: MainCamera
       objectReference: {fileID: 0}
     - target: {fileID: 9014991905059639864, guid: 37e7de93c0e913d4b87ef714a5374619, type: 3}
       propertyPath: m_IsActive

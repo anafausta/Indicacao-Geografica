@@ -70,44 +70,20 @@ public class TourUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Configura os textos do Quiz na UI e vincula os eventos de clique de forma limpa.
+    /// Vincula os botões de resposta ao TourManager. Chamado UMA VEZ no início do tour
+    /// (o listener não muda entre desafios, então não precisa ser refeito a cada pergunta).
     /// </summary>
-    public void SetupQuiz(string pergunta, List<string> respostas, TourManager manager)
+    public void BindAnswerListeners(TourManager manager)
     {
-        if (questionTextUI != null)
-        {
-            questionTextUI.text = pergunta;
-        }
-
         for (int i = 0; i < answerButtons.Count; i++)
         {
             if (answerButtons[i] == null) continue;
 
-            if (i < respostas.Count)
-            {
-                answerButtons[i].gameObject.SetActive(true);
-                
-                // Configura o texto interno do botão (TextMeshPro oculto no filho)
-                TextMeshProUGUI btnText = answerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-                if (btnText != null)
-                {
-                    btnText.text = respostas[i];
-                }
-
-                // Limpa listeners antigos para não acumular chamadas em memória
-                answerButtons[i].onClick.RemoveAllListeners();
-                
-                int indexInvariante = i; // Evita problema de escopo de closure do C#
-                answerButtons[i].onClick.AddListener(() => manager.CheckAnswer(indexInvariante));
-            }
-            else
-            {
-                // Esconde botões sobressalentes se a pergunta tiver menos opções
-                answerButtons[i].gameObject.SetActive(false);
-            }
+            int indexInvariante = i;
+            answerButtons[i].onClick.RemoveAllListeners();
+            answerButtons[i].onClick.AddListener(() => manager.CheckAnswer(indexInvariante));
         }
 
-        // Vincula o botão de menu de forma reativa
         if (menuButton != null)
         {
             menuButton.onClick.RemoveAllListeners();

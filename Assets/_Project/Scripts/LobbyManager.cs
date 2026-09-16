@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Collections;
 using TMPro;
+using OdisseiaVR.Core;
 
 public class LobbyDadosLocal
 {
@@ -30,13 +31,8 @@ public class LobbyManager : MonoBehaviour
     public Button previousButton;
     public Button startTourButton;
 
-    [Header("Feedback de Carregamento VR")]
-    [Tooltip("Texto que avisa o utilizador que a cena está a ser carregada em background.")]
-    public TextMeshProUGUI loadingTextUI;
-    [Tooltip("Painel ou imagem de fade para escurecer o menu durante o loading.")]
-    public GameObject loadingPanel;
-    [Tooltip("Barra de progresso visual (Slider UI) para o carregamento assíncrono.")]
-    public UnityEngine.UI.Slider progressBar;
+    [Header("Fade Persistente")]
+    public float fadeDuration = 5f;
 
     [Header("Configurações de Cena")]
     public string tourSceneName = "TourScene";
@@ -48,9 +44,7 @@ public class LobbyManager : MonoBehaviour
 
     private void Awake()
     {
-        if (loadingPanel != null) loadingPanel.SetActive(false);
-        if (loadingTextUI != null) loadingTextUI.gameObject.SetActive(false);
-        
+        PersistentFade.EnsureExists();
         ConfigurarBotoesIniciais();
     }
 
@@ -167,35 +161,33 @@ public class LobbyManager : MonoBehaviour
         }
 
         settings.selectedLocationIndex = currentLocationIndex;
-        
-        // Ativa o painel visual de carregamento no Canvas XR antes de iniciar o peso do I/O
-        if (loadingPanel != null) loadingPanel.SetActive(true);
-        if (progressBar != null) progressBar.value = 0f;
+
+        yield return StartCoroutine(PersistentFade.Instance.FadeToOpaque(fadeDuration));
+        PersistentFade.Instance.ShowProgressBar(true);
+        PersistentFade.Instance.SetProgress(0f);
 
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(tourSceneName);
-        asyncLoad.allowSceneActivation = false; 
+        asyncLoad.allowSceneActivation = false;
 
         while (!asyncLoad.isDone)
         {
-            // Mapeia o progresso da Unity (0 a 0.9) para escala real (0 a 1)
             float progressoReal = Mathf.Clamp01(asyncLoad.progress / 0.9f);
-            
-            if (progressBar != null) 
-            {
-                progressBar.value = progressoReal;
-            }
+            PersistentFade.Instance.SetProgress(progressoReal);
 
-            if (loadingTextUI != null)
-            {
-                int percentagem = Mathf.RoundToInt(progressoReal * 100f);
-                loadingTextUI.text = $"A carregar portal para:\n{locaisNoLobby[currentLocationIndex].locationName}\nProgresso: {percentagem}%";
-            }
+            int percentagem = Mathf.RoundToInt(progressoReal * 100f);
+            PersistentFade.Instance.SetMessage(
+                $"A carregar portal para:\n{locaisNoLobby[currentLocationIndex].locationName}\nProgresso: {percentagem}%");
 
-            // Quando o Quest 2 terminar de colocar a cena inteira na memória RAM
             if (asyncLoad.progress >= 0.9f)
             {
-                // Pequena folga de segurança para o usuário ler o texto de feedback em VR
-                yield return new WaitForSeconds(0.5f);
+                PersistentFade.Instance.SetProgress(1.0f);
+                PersistentFade.Instance.SetMessage(
+                    $"A carregar portal para:\n{locaisNoLobby[currentLocationIndex].locationName}\nProgresso: 100%");
+
+                // Aguarda um tempo fixo (ex: 2 segundos) para permitir a leitura na tela preta
+                yield return new WaitForSeconds(2.0f); 
+
+                PersistentFade.Instance.SetFadeOutOnNextSceneLoad(fadeDuration);
                 asyncLoad.allowSceneActivation = true;
             }
 
