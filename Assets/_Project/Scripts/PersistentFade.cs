@@ -1,159 +1,126 @@
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace OdisseiaVR.Core
 {
     /// <summary>
-    /// Overlay de fade que persiste entre cenas para evitar flashes brancos no carregamento.
-    /// Cria um Canvas + Image em runtime e se marca como DontDestroyOnLoad.
+    /// View do overlay de fade. Só desenha e anima: não conhece cenas, nem quem o chama.
+    /// Criado pelo AppContext e persistente (DontDestroyOnLoad).
+    ///
+    /// MUDANÇA IMPORTANTE: o objeto NÃO é mais filho da câmera da cena. Ser reparentado para
+    /// uma câmera de cena o move para dentro dessa cena e ele pode ser destruído junto com ela.
+    /// Agora ele permanece na raiz persistente e segue a câmera no LateUpdate.
     /// </summary>
-    public class PersistentFade : MonoBehaviour
+    public sealed class PersistentFade : MonoBehaviour, IScreenOverlay
     {
-        public static PersistentFade Instance { get; private set; }
+        [SerializeField] private Vector3 cameraOffset = new Vector3(0f, 0f, 0.4f);
+        [SerializeField] private float worldScale = 0.0008f; // ajuste testando no Quest
+
+        private static readonly Vector2 CanvasSize = new Vector2(1920f, 1080f);
 
         private Canvas canvas;
-        private Image image;
+        private Image fadeImage;
         private TextMeshProUGUI messageText;
-        private GameObject messageGO;
-        private Image progressBarBackground;
-        private Image progressBarFill;
-        private float pendingFadeOutDuration = -1f;
+        private GameObject progressBar;
+        private Image progressFill;
 
-        // Guarda os Canvas que foram desativados durante a transição para restaurá-los depois.
+        // Canvases de cena escondidos durante a tela preta, para restaurar depois.
         private readonly List<Canvas> hiddenCanvases = new List<Canvas>();
 
-        void Awake()
+        private void Awake()
         {
-            if (Instance != null && Instance != this)
+            DontDestroyOnLoad(gameObject);
+            BuildUi();
+            SetVisible(false);
+        }
+
+        private void LateUpdate()
+        {
+            if (!canvas.enabled) return;
+
+            Camera cam = Camera.main;
+            if (cam == null) return;
+
+            if (canvas.worldCamera != cam) canvas.worldCamera = cam;
+            transform.SetPositionAndRotation(cam.transform.TransformPoint(cameraOffset), cam.transform.rotation);
+        }
+
+        // ---------------- IScreenOverlay ----------------
+
+        public IEnumerator FadeToOpaque(float duration)
+        {
+            SetVisible(true);
+            yield return Fade(1f, duration);
+            HideAllSceneUi();
+        }
+
+        public IEnumerator FadeToClear(float duration)
+        {
+            RestoreAllSceneUi();
+
+            if (fadeImage.color.a <= 0f)
             {
-                Destroy(this.gameObject);
-                return;
+                SetVisible(false);
+                yield break;
             }
-            Instance = this;
-            DontDestroyOnLoad(this.gameObject);
-            CreateCanvasAndImage();
-            SceneManager.sceneLoaded += OnSceneLoaded;
+
+            yield return Fade(0f, duration);
+            SetVisible(false);
         }
 
-        void OnDestroy()
+        public void ShowMessage(string message)
         {
-            if (Instance == this)
+            messageText.text = message ?? string.Empty;
+            messageText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+        }
+
+        public void HideMessage() => ShowMessage(null);
+
+        public void ShowProgressBar(bool show) => progressBar.SetActive(show);
+
+        public void SetProgress(float value01) => progressFill.fillAmount = Mathf.Clamp01(value01);
+
+        // ---------------- Internos ----------------
+
+        private IEnumerator Fade(float targetAlpha, float duration)
+        {
+            float startAlpha = fadeImage.color.a;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
             {
-                SceneManager.sceneLoaded -= OnSceneLoaded;
-                Instance = null;
+                elapsed += Time.unscaledDeltaTime;
+                SetAlpha(Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration));
+                yield return null;
             }
+            SetAlpha(targetAlpha);
         }
 
-        private void CreateCanvasAndImage()
+        private void SetAlpha(float alpha)
         {
-            // Canvas no GameObject raiz
-            canvas = gameObject.GetComponent<Canvas>();
-            if (canvas == null) canvas = gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.sortingOrder = 99999;
-            RectTransform canvasRt = canvas.GetComponent<RectTransform>();
-            canvasRt.sizeDelta = new Vector2(1920, 1080);
-
-            // CanvasScaler para escalar corretamente em telas diferentes
-            CanvasScaler cs = gameObject.GetComponent<CanvasScaler>();
-            if (cs == null) cs = gameObject.AddComponent<CanvasScaler>();
-            cs.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
-
-            // Adiciona GraphicRaycaster para garantir renderização UI correta
-            if (gameObject.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
-                gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-
-            // Image preenchendo toda a tela
-            GameObject imgGO = new GameObject("FadeImage");
-            imgGO.transform.SetParent(this.transform, false);
-            image = imgGO.AddComponent<Image>();
-            image.color = new Color(0f, 0f, 0f, 0f);
-
-            RectTransform rt = imgGO.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = Vector2.zero;
-            rt.offsetMax = Vector2.zero;
-
-            // Texto da mensagem centralizado sobre a imagem
-            messageGO = new GameObject("FadeMessage");
-            messageGO.transform.SetParent(this.transform, false);
-            messageText = messageGO.AddComponent<TextMeshProUGUI>();
-            messageText.text = "";
-            messageText.color = Color.white;
-            messageText.alignment = TextAlignmentOptions.Center;
-            messageText.enableWordWrapping = true;
-            messageText.raycastTarget = false;
-            messageText.fontSize = 48;
-            messageText.gameObject.SetActive(false);
-
-            RectTransform mrt = messageGO.GetComponent<RectTransform>();
-            mrt.anchorMin = new Vector2(0.5f, 0.5f);
-            mrt.anchorMax = new Vector2(0.5f, 0.5f);
-            mrt.sizeDelta = new Vector2(1000f, 400f);
-            mrt.anchoredPosition = Vector2.zero;
-
-            // Garante que a mensagem fique acima da imagem de fade
-            messageGO.transform.SetAsLastSibling();
-            // Fundo da barra de progresso
-            GameObject barBgGO = new GameObject("ProgressBarBackground");
-            barBgGO.transform.SetParent(this.transform, false);
-            progressBarBackground = barBgGO.AddComponent<Image>();
-            progressBarBackground.color = new Color(1f, 1f, 1f, 0.15f);
-            progressBarBackground.raycastTarget = false;
-
-            RectTransform barBgRt = barBgGO.GetComponent<RectTransform>();
-            barBgRt.anchorMin = new Vector2(0.5f, 0.5f);
-            barBgRt.anchorMax = new Vector2(0.5f, 0.5f);
-            barBgRt.sizeDelta = new Vector2(800f, 40f);
-            barBgRt.anchoredPosition = new Vector2(0f, -260f); // abaixo da mensagem
-
-            // Preenchimento da barra
-            GameObject barFillGO = new GameObject("ProgressBarFill");
-            barFillGO.transform.SetParent(barBgGO.transform, false);
-            progressBarFill = barFillGO.AddComponent<Image>();
-            progressBarFill.color = Color.white;
-            progressBarFill.raycastTarget = false;
-            progressBarFill.type = Image.Type.Filled;
-            progressBarFill.fillMethod = Image.FillMethod.Horizontal;
-            progressBarFill.fillAmount = 0f;
-
-            RectTransform barFillRt = barFillGO.GetComponent<RectTransform>();
-            barFillRt.anchorMin = Vector2.zero;
-            barFillRt.anchorMax = Vector2.one;
-            barFillRt.offsetMin = Vector2.zero;
-            barFillRt.offsetMax = Vector2.zero;
-
-            barBgGO.SetActive(false); // começa escondida; ShowProgressBar(true) ativa quando precisar
+            Color c = fadeImage.color;
+            c.a = alpha;
+            fadeImage.color = c;
         }
 
-        /// <summary>
-        /// Esconde todos os outros Canvas ativos da cena (exceto o próprio Canvas do fade).
-        /// </summary>
-        private void HideAllSceneUI()
+        // Desabilitar só o Canvas (e não o GameObject) mantém corrotinas e LateUpdate funcionando.
+        private void SetVisible(bool visible) => canvas.enabled = visible;
+
+        private void HideAllSceneUi()
         {
             hiddenCanvases.Clear();
-
-            Canvas[] todosOsCanvas = Object.FindObjectsOfType<Canvas>();
-            foreach (Canvas c in todosOsCanvas)
+            foreach (Canvas c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
             {
-                if (c == null || c == canvas) continue;
-                if (c.enabled)
-                {
-                    c.enabled = false;
-                    hiddenCanvases.Add(c);
-                }
+                if (c == canvas || !c.enabled) continue;
+                c.enabled = false;
+                hiddenCanvases.Add(c);
             }
         }
 
-        /// <summary>
-        /// Restaura a visibilidade de todos os Canvas escondidos por HideAllSceneUI().
-        /// </summary>
-        private void RestoreAllSceneUI()
+        private void RestoreAllSceneUi()
         {
             foreach (Canvas c in hiddenCanvases)
             {
@@ -162,160 +129,67 @@ namespace OdisseiaVR.Core
             hiddenCanvases.Clear();
         }
 
-        /// <summary>
-        /// Garante que uma instância exista no projeto (cria em runtime se necessário).
-        /// </summary>
-        public static void EnsureExists()
-        {
-            if (Instance == null)
-            {
-                GameObject go = new GameObject("PersistentFade");
-                go.AddComponent<PersistentFade>();
-            }
-        }
+        // ---------------- Construção da UI em runtime ----------------
 
-        /// <summary>
-        /// Mostra imediatamente a tela preta opaca.
-        /// </summary>
-        public void ShowImmediateOpaque()
+        private void BuildUi()
         {
-            if (image == null) CreateCanvasAndImage();
-            image.color = new Color(0f, 0f, 0f, 1f);
-            gameObject.SetActive(true);
-            if (canvas != null) canvas.sortingOrder = 99999;
+            canvas = gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.sortingOrder = 99999;
+            ((RectTransform)transform).sizeDelta = CanvasSize;
+            transform.localScale = Vector3.one * worldScale;
 
-            HideAllSceneUI();
-        }
+            gameObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
 
-        /// <summary>
-        /// Exibe uma mensagem central sobre a tela preta. Use rich text (TMP) se desejar formatação.
-        /// </summary>
-        public void SetMessage(string message)
-        {
-            if (messageText == null) CreateCanvasAndImage();
-            if (messageText == null) return;
-            messageText.text = message ?? string.Empty;
-            messageText.gameObject.SetActive(!string.IsNullOrEmpty(message));
-        }
+            RectTransform fadeRect = CreateChild("FadeImage");
+            fadeImage = fadeRect.gameObject.AddComponent<Image>();
+            fadeImage.color = new Color(0f, 0f, 0f, 0f);
+            Stretch(fadeRect);
 
-        /// <summary>
-        /// Limpa a mensagem exibida (esconde o objeto de texto).
-        /// </summary>
-        public void ClearMessage()
-        {
-            if (messageText == null) return;
-            messageText.text = "";
+            RectTransform messageRect = CreateChild("FadeMessage");
+            messageText = messageRect.gameObject.AddComponent<TextMeshProUGUI>();
+            messageText.color = Color.white;
+            messageText.alignment = TextAlignmentOptions.Center;
+            messageText.enableWordWrapping = true;
+            messageText.raycastTarget = false;
+            messageText.fontSize = 48;
+            messageRect.sizeDelta = new Vector2(1000f, 400f);
             messageText.gameObject.SetActive(false);
+
+            RectTransform barRect = CreateChild("ProgressBarBackground");
+            Image barBackground = barRect.gameObject.AddComponent<Image>();
+            barBackground.color = new Color(1f, 1f, 1f, 0.15f);
+            barBackground.raycastTarget = false;
+            barRect.sizeDelta = new Vector2(800f, 40f);
+            barRect.anchoredPosition = new Vector2(0f, -260f);
+            progressBar = barRect.gameObject;
+
+            var fillRect = new GameObject("ProgressBarFill", typeof(RectTransform)).GetComponent<RectTransform>();
+            fillRect.SetParent(barRect, false);
+            progressFill = fillRect.gameObject.AddComponent<Image>();
+            progressFill.raycastTarget = false;
+            progressFill.type = Image.Type.Filled;
+            progressFill.fillMethod = Image.FillMethod.Horizontal;
+            progressFill.fillAmount = 0f;
+            Stretch(fillRect);
+
+            progressBar.SetActive(false);
         }
 
-        public void ShowProgressBar(bool show)
+        private RectTransform CreateChild(string childName)
         {
-            if (progressBarBackground == null) return;
-            progressBarBackground.gameObject.SetActive(show);
+            var rect = new GameObject(childName, typeof(RectTransform)).GetComponent<RectTransform>();
+            rect.SetParent(transform, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            return rect;
         }
 
-        public void SetProgress(float value01)
+        private static void Stretch(RectTransform rect)
         {
-            if (progressBarFill == null) return;
-            progressBarFill.fillAmount = Mathf.Clamp01(value01);
-        }
-
-        /// <summary>
-        /// Marca para dar fade out automaticamente após o próximo carregamento de cena.
-        /// </summary>
-        public void SetFadeOutOnNextSceneLoad(float duration)
-        {
-            pendingFadeOutDuration = duration;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            RestoreAllSceneUI();
-            AttachToActiveCamera();
-            ClearMessage();
-
-            if (pendingFadeOutDuration >= 0f)
-            {
-                StartCoroutine(FadeToTransparentAndDisableCoroutine(pendingFadeOutDuration));
-                pendingFadeOutDuration = -1f;
-            }
-        }
-
-        private void AttachToActiveCamera()
-        {
-            Camera cam = Camera.main;
-            if (cam == null)
-            {
-                Debug.LogWarning("[PersistentFade] Nenhuma câmera com tag MainCamera encontrada na cena.");
-                return;
-            }
-
-            canvas.worldCamera = cam;
-            transform.SetParent(cam.transform, false);
-            transform.localPosition = new Vector3(0f, 0f, 0.4f);
-            transform.localRotation = Quaternion.identity;
-            transform.localScale = Vector3.one * 0.0008f; // ajuste testando no Quest
-        }
-
-        /// <summary>
-        /// Inicia o fade para transparente e desativa o objeto ao final. (Chamado pelo próprio objeto.)
-        /// </summary>
-        public void StartFadeToTransparentAndDisable(float duration)
-        {
-            StartCoroutine(FadeToTransparentAndDisableCoroutine(duration));
-        }
-
-        private IEnumerator FadeToTransparentAndDisableCoroutine(float duration)
-        {
-            if (image == null) yield break;
-            float start = image.color.a;
-            float timer = 0f;
-            while (timer < duration)
-            {
-                timer += Time.unscaledDeltaTime;
-                float progress = Mathf.Clamp01(timer / Mathf.Max(duration, 0.0001f));
-                float a = Mathf.Lerp(start, 0f, progress);
-                Color c = image.color;
-                c.a = a;
-                image.color = c;
-                yield return null;
-            }
-            Color final = image.color;
-            final.a = 0f;
-            image.color = final;
-
-            RestoreAllSceneUI();
-            // Garante que a mensagem esteja escondida antes de desativar
-            ClearMessage();
-            ShowProgressBar(false);
-            gameObject.SetActive(false);
-        }
-
-        /// <summary>
-        /// Faz fade da overlay de transparente para opaco ao longo de 'duration'.
-        /// Use 'yield return StartCoroutine(PersistentFade.Instance.FadeToOpaque(duration));' para aguardar.
-        /// </summary>
-        public IEnumerator FadeToOpaque(float duration)
-        {
-            if (image == null) CreateCanvasAndImage();
-            gameObject.SetActive(true);
-            float start = image.color.a;
-            float timer = 0f;
-            while (timer < duration)
-            {
-                timer += Time.unscaledDeltaTime;
-                float progress = Mathf.Clamp01(timer / Mathf.Max(duration, 0.0001f));
-                float a = Mathf.Lerp(start, 1f, progress);
-                Color c = image.color;
-                c.a = a;
-                image.color = c;
-                yield return null;
-            }
-            Color final = image.color;
-            final.a = 1f;
-            image.color = final;
-
-            HideAllSceneUI();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
     }
 }

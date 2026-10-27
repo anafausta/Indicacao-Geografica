@@ -1,197 +1,124 @@
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
-/// <summary>
-/// RESPONSABILIDADE: Controlar todos os elementos visuais (UI) da cena do Tour.
-/// Modificado para suportar feedbacks de carregamento preventivos (evitando telas pretas vazias em VR)
-/// e suavizar o cálculo de transição sob oscilações de taxa de quadros no Meta Quest 2.
-/// </summary>
-public class TourUIManager : MonoBehaviour
+namespace OdisseiaVR.Tour
 {
-    [Header("Referências da UI - Quiz")]
-    [Tooltip("O componente de texto para exibir a pergunta do quiz.")]
-    public TextMeshProUGUI questionTextUI;
-    [Tooltip("A lista de botões que servirão como opções de resposta.")]
-    public List<Button> answerButtons;
-    
-    [Header("Referências da UI - Navegação")]
-    [Tooltip("Botão para retornar ao Lobby (Menu).")]
-    public Button menuButton;
-
-    [Header("Referências da UI - Transição")]
-    [Tooltip("Uma imagem preta (Image UI) para o fade.")]
-    public Image fadeScreen;
-    [Tooltip("Texto que aparece SOBRE a tela preta indicando carregamentos ou próximos locais.")]
-    public TextMeshProUGUI transitionTextUI; 
-
-    [Header("Configurações de Feedback Visual")]
-    [Tooltip("Cor que o botão de resposta assume ao acertar.")]
-    public Color correctColor = new Color(0.1f, 0.7f, 0.2f);
-    [Tooltip("Cor que o botão de resposta assume ao errar.")]
-    public Color incorrectColor = new Color(0.8f, 0.2f, 0.1f);
-    
-    [Header("Feedback de Carregamento VR")]
-    [Tooltip("Texto que avisa o utilizador que a cena está a ser carregada em background.")]
-    public TextMeshProUGUI loadingTextUI;
-    [Tooltip("Painel ou imagem de fade para escurecer o menu durante o loading.")]
-    public GameObject loadingPanel;
-
-    // Cache de cores originais dos botões para evitar alocações em runtime
-    private Dictionary<Button, Color> originalButtonColors = new Dictionary<Button, Color>();
-
-    private void Awake()
-    {
-        // Salva as cores originais dos botões para resetar posteriormente
-        foreach (Button btn in answerButtons)
-        {
-            if (btn != null)
-            {
-                originalButtonColors[btn] = btn.image.color;
-            }
-        }
-        
-        // Garante que a tela de fade comece ativa para não vazar frames sem carregamento
-        if (fadeScreen != null)
-        {
-            fadeScreen.gameObject.SetActive(true);
-            Color c = fadeScreen.color;
-            c.a = 1f;
-            fadeScreen.color = c;
-        }
-
-        // Assegura que o texto de transição esteja escondido por padrão; só aparece entre mapas
-        if (transitionTextUI != null)
-        {
-            transitionTextUI.gameObject.SetActive(false);
-        }
-    }
-
     /// <summary>
-    /// Vincula os botões de resposta ao TourManager. Chamado UMA VEZ no início do tour
-    /// (o listener não muda entre desafios, então não precisa ser refeito a cada pergunta).
+    /// View do quiz. Não conhece o TourManager: apenas dispara eventos.
+    /// O fade e o texto de transição agora são do PersistentFade (overlay único).
+    /// Campos antigos (fadeScreen, transitionTextUI, loadingTextUI, loadingPanel) foram removidos.
     /// </summary>
-    public void BindAnswerListeners(TourManager manager)
+    public sealed class TourUIManager : MonoBehaviour, ITourView
     {
-        for (int i = 0; i < answerButtons.Count; i++)
+        [Header("Referências da UI - Quiz")]
+        public TextMeshProUGUI questionTextUI;
+        public List<Button> answerButtons;
+
+        [Header("Referências da UI - Navegação")]
+        public Button menuButton;
+
+        [Header("Feedback Visual")]
+        public Color correctColor = new Color(0.1f, 0.7f, 0.2f);
+        public Color incorrectColor = new Color(0.8f, 0.2f, 0.1f);
+
+        public event Action<int> AnswerSelected;
+        public event Action ExitRequested;
+
+        private readonly Dictionary<Button, Color> originalColors = new Dictionary<Button, Color>();
+        private readonly List<TMP_Text> answerLabels = new List<TMP_Text>();
+        private UnityAction[] answerActions;
+        private UnityAction exitAction;
+
+        private void Awake()
         {
-            if (answerButtons[i] == null) continue;
+            answerActions = new UnityAction[answerButtons.Count];
 
-            int indexInvariante = i;
-            answerButtons[i].onClick.RemoveAllListeners();
-            answerButtons[i].onClick.AddListener(() => manager.CheckAnswer(indexInvariante));
-        }
-
-        if (menuButton != null)
-        {
-            menuButton.onClick.RemoveAllListeners();
-            menuButton.onClick.AddListener(() => manager.RequestExitToLobby());
-        }
-
-        // Garantir que o texto de transição não apareça durante perguntas/quiz
-        HideTransitionText();
-    }
-
-    public void SetButtonsInteractable(bool interactable)
-    {
-        foreach (Button btn in answerButtons)
-        {
-            if (btn != null && btn.gameObject.activeSelf)
+            for (int i = 0; i < answerButtons.Count; i++)
             {
-                btn.interactable = interactable;
+                Button button = answerButtons[i];
+                answerLabels.Add(button != null ? button.GetComponentInChildren<TMP_Text>(true) : null);
+
+                int index = i; // captura estável para o closure
+                answerActions[i] = () => AnswerSelected?.Invoke(index);
+
+                if (button != null) originalColors[button] = button.image.color;
             }
-        }
-        if (menuButton != null) menuButton.interactable = interactable;
-    }
 
-    public void ApplyButtonFeedback(int index, bool foiCorreto)
-    {
-        if (index >= 0 && index < answerButtons.Count && answerButtons[index] != null)
-        {
-            answerButtons[index].image.color = foiCorreto ? correctColor : incorrectColor;
+            exitAction = () => ExitRequested?.Invoke();
         }
-    }
 
-    public void ResetButtonColors()
-    {
-        foreach (Button btn in answerButtons)
+        private void OnEnable()
         {
-            if (btn != null && originalButtonColors.ContainsKey(btn))
+            for (int i = 0; i < answerButtons.Count; i++)
             {
-                btn.image.color = originalButtonColors[btn];
+                if (answerButtons[i] != null) answerButtons[i].onClick.AddListener(answerActions[i]);
             }
+            if (menuButton != null) menuButton.onClick.AddListener(exitAction);
         }
-    }
 
-    /// <summary>
-    /// Exibe uma mensagem centralizada na tela de transição (ex: carregamentos ou nomes de mapas).
-    /// </summary>
-    public void ShowTransitionText(string mensagem)
-    {
-        if (transitionTextUI != null)
+        private void OnDisable()
         {
-            transitionTextUI.text = mensagem;
-            transitionTextUI.gameObject.SetActive(true);
+            for (int i = 0; i < answerButtons.Count; i++)
+            {
+                if (answerButtons[i] != null) answerButtons[i].onClick.RemoveListener(answerActions[i]);
+            }
+            if (menuButton != null) menuButton.onClick.RemoveListener(exitAction);
         }
-    }
 
-    public void HideTransitionText()
-    {
-        if (transitionTextUI != null)
+        public void ShowQuiz(string question, IReadOnlyList<string> answers)
         {
-            transitionTextUI.gameObject.SetActive(false);
+            if (answers.Count > answerButtons.Count)
+            {
+                Debug.LogWarning($"[TourUIManager] {answers.Count} respostas, mas só {answerButtons.Count} botões.");
+            }
+
+            questionTextUI.gameObject.SetActive(true);
+            questionTextUI.text = question;
+            if (menuButton != null) menuButton.gameObject.SetActive(true);
+
+            for (int i = 0; i < answerButtons.Count; i++)
+            {
+                Button button = answerButtons[i];
+                if (button == null) continue;
+
+                bool hasAnswer = i < answers.Count;
+                button.gameObject.SetActive(hasAnswer);
+                if (!hasAnswer) continue;
+
+                if (answerLabels[i] != null) answerLabels[i].text = answers[i];
+                button.image.color = originalColors[button];
+            }
+
+            SetInteractable(true);
         }
-    }
 
-    // --- CORROTINAS DE TRANSÇÃO VISUAL (FADES DE PRETO) ---
-
-    public IEnumerator FadeIn(float duration)
-    {
-        if (duration <= 0f)
+        public void HideQuiz()
         {
-            SetFadeAlpha(0f);
-            yield break;
+            questionTextUI.gameObject.SetActive(false);
+            foreach (Button button in answerButtons)
+            {
+                if (button != null) button.gameObject.SetActive(false);
+            }
+            if (menuButton != null) menuButton.gameObject.SetActive(false);
         }
 
-        float elapsed = 0f;
-        while (elapsed < duration)
+        public void SetInteractable(bool interactable)
         {
-            elapsed += Time.unscaledDeltaTime; // Correção principal aplicada
-            float alpha = Mathf.Lerp(1f, 0f, elapsed / duration);
-            SetFadeAlpha(alpha);
-            yield return null;
+            foreach (Button button in answerButtons)
+            {
+                if (button != null && button.gameObject.activeSelf) button.interactable = interactable;
+            }
+            if (menuButton != null) menuButton.interactable = interactable;
         }
-        SetFadeAlpha(0f);
-    }
 
-    public IEnumerator FadeOut(float duration)
-    {
-        if (duration <= 0f)
+        public void MarkAnswer(int index, bool isCorrect)
         {
-            SetFadeAlpha(1f);
-            yield break;
+            if (index < 0 || index >= answerButtons.Count || answerButtons[index] == null) return;
+            answerButtons[index].image.color = isCorrect ? correctColor : incorrectColor;
         }
-
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime; // Correção principal aplicada
-            float alpha = Mathf.Lerp(0f, 1f, elapsed / duration);
-            SetFadeAlpha(alpha);
-            yield return null;
-        }
-        SetFadeAlpha(1f);
-    }
-
-    private void SetFadeAlpha(float alpha)
-    {
-        if (fadeScreen == null) return;
-        Color c = fadeScreen.color;
-        c.a = Mathf.Clamp01(alpha);
-        fadeScreen.color = c;
-        // ativa o objeto apenas quando houver opacidade para evitar blocos invisíveis na hierarquia
-        fadeScreen.gameObject.SetActive(c.a > 0f);
     }
 }
