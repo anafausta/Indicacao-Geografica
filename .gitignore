@@ -81,6 +81,8 @@ crashlytics-build.properties
 
 # 
 MuseuTeste3_BurstDebugInformation_DoNotShip/
+OdisseiaVR_BurstDebugInformation_DoNotShip/
+Indicacao-Geografica_BurstDebugInformation_DoNotShip/
 
 #Videos
 *.mp4
