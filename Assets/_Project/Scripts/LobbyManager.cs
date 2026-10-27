@@ -1,197 +1,140 @@
+using System.Collections;
+using System.Collections.Generic;
+using OdisseiaVR.Core;
+using OdisseiaVR.Tour.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using System.Collections.Generic;
-using System.Collections;
-using TMPro;
-using OdisseiaVR.Core;
 
-public class LobbyDadosLocal
+namespace OdisseiaVR.Lobby
 {
-    public string locationName;
-    public Texture mapTexture; 
-}
-
-/// <summary>
-/// RESPONSABILIDADE: Gerenciar a cena do Lobby (Menu Principal) de forma reativa.
-/// Otimizado para o Meta Quest 2 para evitar picos de I/O ao alternar mapas
-/// e fornecer feedback visual contínuo durante a mudança assíncrona de cena.
-/// </summary>
-[RequireComponent(typeof(AudioSource))]
-public class LobbyManager : MonoBehaviour
-{
-    [Header("Arquivo de Conteúdo")]
-    [Tooltip("Arraste aqui o arquivo JSON que contém os dados dos tours.")]
-    public TextAsset tourDataJson;
-
-    [Header("Referências da UI (Canvas XR)")]
-    public TextMeshProUGUI locationNameText;
-    public RawImage mapDisplayImage;
-    public Button nextButton;
-    public Button previousButton;
-    public Button startTourButton;
-
-    [Header("Fade Persistente")]
-    public float fadeDuration = 5f;
-
-    [Header("Configurações de Cena")]
-    public string tourSceneName = "TourScene";
-
-    // --- ESTADO INTERNO ---
-    private List<LobbyDadosLocal> locaisNoLobby = new List<LobbyDadosLocal>();
-    private int currentLocationIndex = 0;
-    private bool isLoadingScene = false;
-
-    private void Awake()
-    {
-        PersistentFade.EnsureExists();
-        ConfigurarBotoesIniciais();
-    }
-
-    private void Start()
-    {
-        if (tourDataJson != null)
-        {
-            StartCoroutine(ParseJsonECarregarPrimeiroAsync());
-        }
-        else
-        {
-            Debug.LogError($"[{gameObject.name}] tourDataJson não foi atribuído no Lobby!");
-        }
-    }
-
-    private void ConfigurarBotoesIniciais()
-    {
-        if (nextButton != null) nextButton.onClick.AddListener(AvancarLocal);
-        if (previousButton != null) previousButton.onClick.AddListener(RetrocederLocal);
-        if (startTourButton != null) startTourButton.onClick.AddListener(IniciarTourSelecionado);
-    }
-
     /// <summary>
-    /// Lê a estrutura do JSON e faz o pré-carregamento assíncrono do primeiro elemento
-    /// para evitar travamentos de frame na inicialização do menu VR.
+    /// RESPONSABILIDADE: apresentar o menu e reagir aos botões.
+    /// Parse de JSON ficou no repositório; transição de cena ficou no SceneLoader.
+    /// Os nomes dos campos serializados foram mantidos para não perder as ligações no Inspector.
     /// </summary>
-    private IEnumerator ParseJsonECarregarPrimeiroAsync()
+    public sealed class LobbyManager : MonoBehaviour
     {
-        SetInteratividadeInterface(false);
+        [Header("Arquivo de Conteúdo")]
+        [Tooltip("Arraste aqui o arquivo JSON que contém os dados dos tours.")]
+        public TextAsset tourDataJson;
 
-        TourDataJson dadosJson = JsonUtility.FromJson<TourDataJson>(tourDataJson.text);
-        
-        foreach (var localJson in dadosJson.locais)
+        [Header("Referências da UI (Canvas XR)")]
+        public TextMeshProUGUI locationNameText;
+        public RawImage mapDisplayImage;
+        public Button nextButton;
+        public Button previousButton;
+        public Button startTourButton;
+
+        [Header("Transição")]
+        public float fadeDuration = 5f;
+        public float loadHoldSeconds = 2f;
+
+        [Header("Configurações de Cena")]
+        public string tourSceneName = "TourScene";
+
+        private ITourRepository repository;
+        private IReadOnlyList<LocationSummary> locations = new List<LocationSummary>();
+        private int currentIndex;
+        private bool isLoadingScene;
+
+        private void Awake()
         {
-            LobbyDadosLocal novoLocal = new LobbyDadosLocal
+            if (tourDataJson != null)
             {
-                locationName = localJson.locationName
+                repository = new JsonTourRepository(tourDataJson);
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (nextButton != null) nextButton.onClick.AddListener(ShowNext);
+            if (previousButton != null) previousButton.onClick.AddListener(ShowPrevious);
+            if (startTourButton != null) startTourButton.onClick.AddListener(StartSelectedTour);
+        }
+
+        private void OnDisable()
+        {
+            if (nextButton != null) nextButton.onClick.RemoveListener(ShowNext);
+            if (previousButton != null) previousButton.onClick.RemoveListener(ShowPrevious);
+            if (startTourButton != null) startTourButton.onClick.RemoveListener(StartSelectedTour);
+        }
+
+        private IEnumerator Start()
+        {
+            SetInteractable(false);
+
+            if (repository == null)
+            {
+                Debug.LogError($"[{nameof(LobbyManager)}] tourDataJson não foi atribuído no Lobby!");
+                yield break;
+            }
+
+            yield return repository.LoadSummariesAsync(loaded => locations = loaded);
+
+            currentIndex = 0;
+            Refresh();
+            SetInteractable(locations.Count > 0);
+
+            // Só revela a tela quando o menu já está com conteúdo.
+            yield return AppContext.SceneLoader.Reveal(fadeDuration);
+        }
+
+        private void ShowNext() => Step(+1);
+
+        private void ShowPrevious() => Step(-1);
+
+        private void Step(int delta)
+        {
+            if (isLoadingScene || locations.Count == 0) return;
+
+            currentIndex = (currentIndex + delta + locations.Count) % locations.Count;
+            Refresh();
+        }
+
+        private void Refresh()
+        {
+            if (currentIndex < 0 || currentIndex >= locations.Count) return;
+
+            LocationSummary location = locations[currentIndex];
+            if (locationNameText != null) locationNameText.text = location.Name;
+            if (mapDisplayImage != null) mapDisplayImage.texture = location.MapTexture;
+        }
+
+        public void StartSelectedTour()
+        {
+            if (isLoadingScene || locations.Count == 0) return;
+
+            isLoadingScene = true;
+            SetInteractable(false);
+            AppContext.Session.SelectedLocationIndex = currentIndex;
+
+            StartCoroutine(LoadTourScene());
+        }
+
+        private IEnumerator LoadTourScene()
+        {
+            var request = new SceneLoadRequest
+            {
+                SceneName = tourSceneName,
+                MessageTemplate = $"A carregar portal para:\n{locations[currentIndex].Name}\nProgresso: {{progress}}%",
+                FadeOutDuration = fadeDuration,
+                RevealDuration = fadeDuration,
+                HoldSeconds = loadHoldSeconds
             };
 
-            // Carrega a textura miniatura do mapa de forma assíncrona
-            if (!string.IsNullOrEmpty(localJson.mapImagePath))
-            {
-                ResourceRequest request = Resources.LoadAsync<Texture>(localJson.mapImagePath);
-                yield return request;
-                novoLocal.mapTexture = request.asset as Texture;
-            }
+            yield return AppContext.SceneLoader.LoadScene(request);
 
-            locaisNoLobby.Add(novoLocal);
+            // Só chega aqui se a troca de cena falhou: devolve o controle ao usuário.
+            isLoadingScene = false;
+            SetInteractable(true);
         }
 
-        SetInteratividadeInterface(true);
-        AtualizarDisplayInterface();
-    }
-
-    private void AvancarLocal()
-    {
-        if (locaisNoLobby.Count == 0 || isLoadingScene) return;
-
-        currentLocationIndex = (currentLocationIndex + 1) % locaisNoLobby.Count;
-        AtualizarDisplayInterface();
-    }
-
-    private void RetrocederLocal()
-    {
-        if (locaisNoLobby.Count == 0 || isLoadingScene) return;
-
-        currentLocationIndex--;
-        if (currentLocationIndex < 0)
+        private void SetInteractable(bool value)
         {
-            currentLocationIndex = locaisNoLobby.Count - 1;
-        }
-        AtualizarDisplayInterface();
-    }
-
-    private void AtualizarDisplayInterface()
-    {
-        if (currentLocationIndex < 0 || currentLocationIndex >= locaisNoLobby.Count) return;
-
-        LobbyDadosLocal localAtual = locaisNoLobby[currentLocationIndex];
-
-        if (locationNameText != null) locationNameText.text = localAtual.locationName;
-        if (mapDisplayImage != null)  mapDisplayImage.texture = localAtual.mapTexture;
-    }
-
-    private void SetInteratividadeInterface(bool estado)
-    {
-        if (nextButton != null) nextButton.interactable = estado;
-        if (previousButton != null) previousButton.interactable = estado;
-        if (startTourButton != null) startTourButton.interactable = estado;
-    }
-
-    public void IniciarTourSelecionado()
-    {
-        if (isLoadingScene) return;
-        isLoadingScene = true; // Impede múltiplos cliques
-        SetInteratividadeInterface(false);
-        
-        // Agora chama a corrotina unificada que preenche a barra de progresso!
-        StartCoroutine(LoadTourSceneAsync());
-    }
-
-    /// <summary>
-    /// Fluxo controlado de transição: Ativa mensagens de feedback para o utilizador VR,
-    /// desativa os inputs da UI para evitar cliques duplos e gerencia a memória antes da troca.
-    /// </summary>
-    private IEnumerator LoadTourSceneAsync()
-    {
-        GameSettings settings = GameSettings.Instance;
-        if (settings == null)
-        {
-            Debug.LogWarning("[LobbyManager] GameSettings não encontrado. Criando instância de emergência.");
-            GameObject settingsObj = new GameObject("_GameSettings");
-            settings = settingsObj.AddComponent<GameSettings>();
-        }
-
-        settings.selectedLocationIndex = currentLocationIndex;
-
-        yield return StartCoroutine(PersistentFade.Instance.FadeToOpaque(fadeDuration));
-        PersistentFade.Instance.ShowProgressBar(true);
-        PersistentFade.Instance.SetProgress(0f);
-
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(tourSceneName);
-        asyncLoad.allowSceneActivation = false;
-
-        while (!asyncLoad.isDone)
-        {
-            float progressoReal = Mathf.Clamp01(asyncLoad.progress / 0.9f);
-            PersistentFade.Instance.SetProgress(progressoReal);
-
-            int percentagem = Mathf.RoundToInt(progressoReal * 100f);
-            PersistentFade.Instance.SetMessage(
-                $"A carregar portal para:\n{locaisNoLobby[currentLocationIndex].locationName}\nProgresso: {percentagem}%");
-
-            if (asyncLoad.progress >= 0.9f)
-            {
-                PersistentFade.Instance.SetProgress(1.0f);
-                PersistentFade.Instance.SetMessage(
-                    $"A carregar portal para:\n{locaisNoLobby[currentLocationIndex].locationName}\nProgresso: 100%");
-
-                // Aguarda um tempo fixo (ex: 2 segundos) para permitir a leitura na tela preta
-                yield return new WaitForSeconds(2.0f); 
-
-                PersistentFade.Instance.SetFadeOutOnNextSceneLoad(fadeDuration);
-                asyncLoad.allowSceneActivation = true;
-            }
-
-            yield return null;
+            if (nextButton != null) nextButton.interactable = value;
+            if (previousButton != null) previousButton.interactable = value;
+            if (startTourButton != null) startTourButton.interactable = value;
         }
     }
 }

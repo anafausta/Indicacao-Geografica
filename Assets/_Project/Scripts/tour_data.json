@@ -1,5 +1,6 @@
 {
-  "locais": [    
+  "locais": [  
+    
     {
     "locationName": "IP Vale da Grama - São Sebastião da Grama",
     "backgroundMusicPath": "Audio/trilhasonora_cafe",
@@ -89,5 +90,6 @@
       }
     ]
   }
+  
 ]
 }
