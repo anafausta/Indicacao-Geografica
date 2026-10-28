@@ -87,3 +87,5 @@ Indicacao-Geografica_BurstDebugInformation_DoNotShip/
 #Videos
 *.mp4
 *.mp4.meta
+
+user.keystore

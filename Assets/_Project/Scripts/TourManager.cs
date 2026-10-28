@@ -22,6 +22,7 @@ namespace OdisseiaVR.Tour
         [SerializeField] private PanoramaPresenter panorama;
         [SerializeField] private VideoPanoramaPlayer videoPlayer;
         [SerializeField] private TourAudio audioHub;
+        [SerializeField] private HotspotManager hotspotManager; // NOVO: Referência do HotspotManager
         [Tooltip("Opcional: deixe vazio para testar no Editor sem headset.")]
         [SerializeField] private XrTourInput xrInput;
 
@@ -51,7 +52,8 @@ namespace OdisseiaVR.Tour
 
             var all = new IChallengeHandler[]
             {
-                new QuizChallengeHandler(uiManager, panorama, audioHub, settings.feedbackDelay, this),
+                // Injetamos o hotspotManager no construtor do QuizChallengeHandler
+                new QuizChallengeHandler(uiManager, panorama, audioHub, hotspotManager, settings.feedbackDelay, this),
                 new VideoChallengeHandler(uiManager, panorama, videoPlayer, audioHub)
             };
 

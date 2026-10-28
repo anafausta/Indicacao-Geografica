@@ -7,6 +7,24 @@ namespace OdisseiaVR.Tour.Data
     // O resto do projeto trabalha com o modelo de domínio (TourModels.cs).
 
     [Serializable]
+    internal class Vector3Json
+    {
+        public float x;
+        public float y;
+        public float z;
+    }
+
+    [Serializable]
+    internal class HotspotJson
+    {
+        public string id;
+        public string title;
+        public string description;
+        public Vector3Json position;
+        public string imagePath;
+    }
+
+    [Serializable]
     internal class DesafioJson
     {
         public string panoramaMaterialPath;
@@ -15,6 +33,7 @@ namespace OdisseiaVR.Tour.Data
         public string questionText;
         public List<string> answers;
         public int correctAnswerIndex;
+        public List<HotspotJson> hotspots; // Campo adicionado para os hotspots
     }
 
     [Serializable]

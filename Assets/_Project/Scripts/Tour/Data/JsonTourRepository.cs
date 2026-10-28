@@ -73,11 +73,29 @@ namespace OdisseiaVR.Tour.Data
                     yield return LoadAsset<Material>(desafio.panoramaMaterialPath, asset => panorama = asset);
                     challenges.Add(new QuizChallenge(
                         desafio.initialYRotation, panorama, desafio.questionText,
-                        desafio.answers, desafio.correctAnswerIndex));
+                        desafio.answers, desafio.correctAnswerIndex,
+                        MapHotspots(desafio.hotspots)));
                 }
             }
 
             onLoaded(new TourLocation(dto.locationName, music, challenges));
+        }
+
+        // Converte os DTOs do JSON no modelo de domínio. Lista nula (ex.: desafios de vídeo) vira lista vazia.
+        private static List<HotspotData> MapHotspots(List<HotspotJson> source)
+        {
+            var result = new List<HotspotData>();
+            if (source == null) return result;
+
+            foreach (HotspotJson h in source)
+            {
+                Vector3 position = h.position != null
+                    ? new Vector3(h.position.x, h.position.y, h.position.z)
+                    : Vector3.zero;
+
+                result.Add(new HotspotData(h.id, h.title, h.description, position, h.imagePath));
+            }
+            return result;
         }
 
         public IEnumerator ReleaseAssetsAsync()

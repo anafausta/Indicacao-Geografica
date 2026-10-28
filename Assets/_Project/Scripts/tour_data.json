@@ -1,95 +1,115 @@
 {
   "locais": [  
-    
     {
-    "locationName": "IP Vale da Grama - São Sebastião da Grama",
-    "backgroundMusicPath": "Audio/trilhasonora_cafe",
-    "mapImagePath": "UI/Mapas/mapa_cafe",
-    "desafios": [
-      {
-        "panoramaMaterialPath": "",
-        "videoPath": "Video/Video_Prefeito",
-        "initialYRotation": 0.0,
-        "questionText": "",
-        "answers": [],
-        "correctAnswerIndex": -1
-      },
-      {
-        "panoramaMaterialPath": "",
-        "videoPath": "Video/Video_cafeicultores",
-        "initialYRotation": 0.0,
-        "questionText": "",
-        "answers": [],
-        "correctAnswerIndex": -1
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe001",
-        "initialYRotation": 180 ,
-        "questionText": "Qual organização liderou o projeto de conquista da IG para os cafeicultores locais?",
-        "answers": [
-          "Associação dos Cafeicultores do Vale da Grama",
-          "Cooperativa Regional dos Produtores de Grama",
-          "Sindicato Rural de São Sebastião"
-        ],
-        "correctAnswerIndex": 0
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe002",
-        "initialYRotation": 180,
-        "questionText": "Qual o nome do selo de Indicação Geográfica (IG) do café de São Sebastião da Grama?",
-        "answers": [
-          "Planalto de Grama",
-          "Terras Altas da Mogiana",
-          "Vale da Grama"
-        ],
-        "correctAnswerIndex": 2
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe003",
-        "initialYRotation": 180,
-        "questionText": "Antes da emancipação em 1925, como a região era conhecida por suas pastagens naturais?",
-        "answers": [
-          "Rancho Verde",
-          "Parada das Tropas",
-          "Pouso de Grama"
-        ],
-        "correctAnswerIndex": 2
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe004",
-        "initialYRotation": 180,
-        "questionText": "O que a localização elevada do Cristo Redentor representa para São Sebastião da Grama?",
-        "answers": [
-          "Praticidade",
-          "Proteção",
-          "Isolamento"
-        ],
-        "correctAnswerIndex": 1
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe005",
-        "initialYRotation": 180,
-        "questionText": "No contexto da cidade, qual é a importância da Praça da Matriz, onde a igreja está localizada?",
-        "answers": [
-          "Centro geográfico e histórico",
-          "Área de preservação ambiental",
-          "Sem importância social"
-        ],
-        "correctAnswerIndex": 0
-      },
-      {
-        "panoramaMaterialPath": "Materials/Cafe/Cafe006",
-        "initialYRotation": 180,
-        "questionText": "Em qual tipo de solo raro o café da região é cultivado?",
-        "answers": [
-          "Solo de massapê",
-          "Solo de origem vulcânica",
-          "Solo de várzea arenosa"
-        ],
-        "correctAnswerIndex": 1
-      }
-    ]
-  }
-  
-]
+      "locationName": "IP Vale da Grama - São Sebastião da Grama",
+      "backgroundMusicPath": "Audio/trilhasonora_cafe",
+      "mapImagePath": "UI/Mapas/mapa_cafe",
+      "desafios": [
+        {
+          "panoramaMaterialPath": "",
+          "videoPath": "Video/Video_Prefeito",
+          "initialYRotation": 0.0,
+          "questionText": "",
+          "answers": [],
+          "correctAnswerIndex": -1
+        },
+        {
+          "panoramaMaterialPath": "",
+          "videoPath": "Video/Video_cafeicultores",
+          "initialYRotation": 0.0,
+          "questionText": "",
+          "answers": [],
+          "correctAnswerIndex": -1
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe001",
+          "initialYRotation": 180,
+          "questionText": "Qual organização liderou o projeto de conquista da IG para os cafeicultores locais?",
+          "answers": [
+            "Associação dos Cafeicultores do Vale da Grama",
+            "Cooperativa Regional dos Produtores de Grama",
+            "Sindicato Rural de São Sebastião"
+          ],
+          "correctAnswerIndex": 0,
+          "hotspots": [
+            {
+              "id": "info_associacao",
+              "title": "Associação dos Cafeicultores",
+              "description": "Sede da Associação responsável pela conquista e gestão do selo de Indicação Geográfica (IP Vale da Grama).",
+              "position": { "x": 2.5, "y": 1.0, "z": 3.5 },
+              "imagePath": ""
+            }
+          ]
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe002",
+          "initialYRotation": 180,
+          "questionText": "Qual o nome do selo de Indicação Geográfica (IG) do café de São Sebastião da Grama?",
+          "answers": [
+            "Planalto de Grama",
+            "Terras Altas da Mogiana",
+            "Vale da Grama"
+          ],
+          "correctAnswerIndex": 2,
+          "hotspots": []
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe003",
+          "initialYRotation": 180,
+          "questionText": "Antes da emancipação em 1925, como a região era conhecida por suas pastagens naturais?",
+          "answers": [
+            "Rancho Verde",
+            "Parada das Tropas",
+            "Pouso de Grama"
+          ],
+          "correctAnswerIndex": 2,
+          "hotspots": []
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe004",
+          "initialYRotation": 180,
+          "questionText": "O que a localização elevada do Cristo Redentor representa para São Sebastião da Grama?",
+          "answers": [
+            "Praticidade",
+            "Proteção",
+            "Isolamento"
+          ],
+          "correctAnswerIndex": 1,
+          "hotspots": []
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe005",
+          "initialYRotation": 180,
+          "questionText": "No contexto da cidade, qual é a importância da Praça da Matriz, onde a igreja está localizada?",
+          "answers": [
+            "Centro geográfico e histórico",
+            "Área de preservação ambiental",
+            "Sem importância social"
+          ],
+          "correctAnswerIndex": 0,
+          "hotspots": [
+            {
+              "id": "info_paroquia",
+              "title": "Paróquia São Sebastião",
+              "description": "Fundada no século XX, a Paróquia é o centro histórico e religioso do município de São Sebastião da Grama.",
+              "position": { "x": -3.2, "y": 1.2, "z": 2.8 },
+              "imagePath": ""
+            }
+          ]
+        },
+        {
+          "panoramaMaterialPath": "Materials/Cafe/Cafe006",
+          "initialYRotation": 180,
+          "questionText": "Em qual tipo de solo raro o café da região é cultivado?",
+          "answers": [
+            "Solo de massapê",
+            "Solo de origem vulcânica",
+            "Solo de várzea arenosa"
+          ],
+          "correctAnswerIndex": 1,
+          "hotspots": []
+        }
+      ]
+    }
+  ]
 }

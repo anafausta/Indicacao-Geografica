@@ -12,6 +12,27 @@ namespace OdisseiaVR.Tour.Data
     }
 
     /// <summary>
+    /// Modelo de domínio que representa um Hotspot Interativo no cenário 360°.
+    /// </summary>
+    public sealed class HotspotData
+    {
+        public string Id { get; }
+        public string Title { get; }
+        public string Description { get; }
+        public Vector3 Position { get; }
+        public string ImagePath { get; }
+
+        public HotspotData(string id, string title, string description, Vector3 position, string imagePath = null)
+        {
+            Id = id;
+            Title = title;
+            Description = description;
+            Position = position;
+            ImagePath = imagePath;
+        }
+    }
+
+    /// <summary>
     /// Um passo do tour. Substitui a classe Desafio que misturava quiz e vídeo
     /// (campos de quiz vazios em vídeos, flag IsVideo). Cada tipo carrega só o que usa.
     /// </summary>
@@ -32,16 +53,19 @@ namespace OdisseiaVR.Tour.Data
         public string Question { get; }
         public IReadOnlyList<string> Answers { get; }
         public int CorrectAnswerIndex { get; }
+        public IReadOnlyList<HotspotData> Hotspots { get; } // Campo adicionado
 
         public override ChallengeKind Kind => ChallengeKind.Quiz;
 
         public QuizChallenge(float yRotation, Material panorama, string question,
-                             IEnumerable<string> answers, int correctAnswerIndex) : base(yRotation)
+                             IEnumerable<string> answers, int correctAnswerIndex,
+                             IEnumerable<HotspotData> hotspots = null) : base(yRotation)
         {
             Panorama = panorama;
             Question = question;
             Answers = new List<string>(answers ?? new List<string>());
             CorrectAnswerIndex = correctAnswerIndex;
+            Hotspots = new List<HotspotData>(hotspots ?? new List<HotspotData>());
         }
 
         public bool IsCorrect(int answerIndex) => answerIndex == CorrectAnswerIndex;

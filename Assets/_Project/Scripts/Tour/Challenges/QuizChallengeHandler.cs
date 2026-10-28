@@ -5,12 +5,13 @@ using UnityEngine;
 
 namespace OdisseiaVR.Tour.Challenges
 {
-    /// <summary>Executa um desafio de pergunta e resposta sobre um panorama 360.</summary>
+    /// <summary>Executa um desafio de pergunta e resposta sobre um panorama 360, gerando hotspots interativos.</summary>
     public sealed class QuizChallengeHandler : IChallengeHandler
     {
         private readonly ITourView view;
         private readonly PanoramaPresenter panorama;
         private readonly TourAudio audio;
+        private readonly HotspotManager hotspotManager; // NOVO
         private readonly MonoBehaviour coroutineHost;
         private readonly float feedbackDelay;
 
@@ -21,11 +22,12 @@ namespace OdisseiaVR.Tour.Challenges
         public ChallengeKind Kind => ChallengeKind.Quiz;
 
         public QuizChallengeHandler(ITourView view, PanoramaPresenter panorama, TourAudio audio,
-                                    float feedbackDelay, MonoBehaviour coroutineHost)
+                                    HotspotManager hotspotManager, float feedbackDelay, MonoBehaviour coroutineHost)
         {
             this.view = view;
             this.panorama = panorama;
             this.audio = audio;
+            this.hotspotManager = hotspotManager; // NOVO
             this.feedbackDelay = feedbackDelay;
             this.coroutineHost = coroutineHost;
         }
@@ -38,6 +40,12 @@ namespace OdisseiaVR.Tour.Challenges
             audio.PlayMusic(context.Location.BackgroundMusic);
             panorama.Show(quiz.Panorama, quiz.InitialYRotation);
 
+            // Instancia os Hotspots 3D cadastrados para este quiz
+            if (hotspotManager != null && quiz.Hotspots != null)
+            {
+                hotspotManager.SpawnHotspots(quiz.Hotspots, quiz.InitialYRotation);
+            }
+
             view.AnswerSelected += OnAnswerSelected;
             view.ShowQuiz(quiz.Question, quiz.Answers);
         }
@@ -45,6 +53,12 @@ namespace OdisseiaVR.Tour.Challenges
         public void End()
         {
             view.AnswerSelected -= OnAnswerSelected;
+
+            // Limpa os hotspots do cenário ao encerrar o desafio
+            if (hotspotManager != null)
+            {
+                hotspotManager.ClearHotspots();
+            }
 
             if (feedbackRoutine != null && coroutineHost != null)
             {
@@ -78,6 +92,12 @@ namespace OdisseiaVR.Tour.Challenges
 
             if (isCorrect)
             {
+                // Limpa os hotspots antes de avançar para a próxima etapa
+                if (hotspotManager != null)
+                {
+                    hotspotManager.ClearHotspots();
+                }
+
                 onCompleted?.Invoke();
             }
             else
