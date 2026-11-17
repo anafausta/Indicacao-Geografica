@@ -7,7 +7,7 @@ namespace OdisseiaVR.Tour.Challenges
 {
     /// <summary>
     /// Componente anexo ao objeto 3D do Hotspot.
-    /// - Hover (apontar): muda a cor, via eventos do XRSimpleInteractable no prefab.
+    /// - Hover (apontar): muda a cor e aumenta suavemente a escala, via eventos do XRSimpleInteractable no prefab.
     /// - Acionamento: GATILHO (ação Activate) do controle que está apontando para o hotspot.
     ///   Funciona igual com o controle real e com o XR Device Simulator, porque ambos
     ///   passam pelo mesmo Input Action do interactor.
@@ -17,13 +17,18 @@ namespace OdisseiaVR.Tour.Challenges
     [RequireComponent(typeof(XRSimpleInteractable))]
     public class Hotspot : MonoBehaviour
     {
+        [Header("Feedback Visual (Hover)")]
         [SerializeField] private Color hoverColor = Color.yellow;
+        [SerializeField] private float hoverScaleMultiplier = 1.4f; // Aumenta 40% no hover
+        [SerializeField] private float scaleSpeed = 10f;
 
         private HotspotData data;
         private HotspotManager manager;
         private XRSimpleInteractable interactable;
         private Renderer meshRenderer;
         private Color originalColor;
+        private Vector3 originalScale;
+        private Vector3 targetScale;
 
         private void Awake()
         {
@@ -36,6 +41,9 @@ namespace OdisseiaVR.Tour.Challenges
             manager = managerRef;
             transform.localPosition = data.Position;
 
+            originalScale = transform.localScale;
+            targetScale = originalScale;
+
             meshRenderer = GetComponent<Renderer>();
             if (meshRenderer != null)
             {
@@ -46,6 +54,7 @@ namespace OdisseiaVR.Tour.Challenges
         private void Update()
         {
             FaceCamera();
+            UpdateHoverScale();
             PollTrigger();
         }
 
@@ -57,6 +66,12 @@ namespace OdisseiaVR.Tour.Challenges
 
             transform.LookAt(cam.transform);
             transform.Rotate(0f, 180f, 0f);
+        }
+
+        /// <summary>Interpola suavemente a escala do ícone entre o tamanho original e o tamanho de hover.</summary>
+        private void UpdateHoverScale()
+        {
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * scaleSpeed);
         }
 
         /// <summary>
@@ -83,12 +98,16 @@ namespace OdisseiaVR.Tour.Challenges
         {
             if (meshRenderer != null)
                 meshRenderer.material.color = hoverColor;
+
+            targetScale = originalScale * hoverScaleMultiplier;
         }
 
         public void OnHoverExit()
         {
             if (meshRenderer != null)
                 meshRenderer.material.color = originalColor;
+
+            targetScale = originalScale;
         }
 
         // Mantido público e com o mesmo nome: se algum prefab antigo ainda ligar "Select Entered" aqui,
@@ -105,11 +124,5 @@ namespace OdisseiaVR.Tour.Challenges
 
             manager.ShowPopup(data);
         }
-
-#if UNITY_EDITOR
-        // Teste rápido sem controle: botão direito no componente, em Play mode.
-        [ContextMenu("DEBUG/Abrir pop-up")]
-        private void DebugOpenPopup() => OpenPopup();
-#endif
-    }
+}
 }

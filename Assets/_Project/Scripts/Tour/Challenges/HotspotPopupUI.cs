@@ -17,7 +17,7 @@ namespace OdisseiaVR.Tour.Challenges
         [Header("Elementos de UI")]
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI descriptionText;
-        [SerializeField] private Image optionalImage;
+        [SerializeField] private RawImage optionalImage;
         [SerializeField] private Button closeButton;
 
         private Action onCloseCallback;
@@ -62,9 +62,9 @@ namespace OdisseiaVR.Tour.Challenges
             {
                 if (!string.IsNullOrWhiteSpace(data.ImagePath))
                 {
-                    Sprite loadedSprite = Resources.Load<Sprite>(data.ImagePath);
-                    optionalImage.sprite = loadedSprite;
-                    optionalImage.gameObject.SetActive(loadedSprite != null);
+                    Texture2D loadedTexture = Resources.Load<Texture2D>(data.ImagePath);
+                    optionalImage.texture = loadedTexture;
+                    optionalImage.gameObject.SetActive(loadedTexture != null);
                 }
                 else
                 {
