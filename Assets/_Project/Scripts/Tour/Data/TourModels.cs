@@ -63,9 +63,37 @@ namespace OdisseiaVR.Tour.Data
         {
             Panorama = panorama;
             Question = question;
-            Answers = new List<string>(answers ?? new List<string>());
-            CorrectAnswerIndex = correctAnswerIndex;
             Hotspots = new List<HotspotData>(hotspots ?? new List<HotspotData>());
+
+            var answerList = new List<string>(answers ?? new List<string>());
+
+            // Valida se existem respostas e se o índice recebido do JSON é válido
+            if (answerList.Count > 0 && correctAnswerIndex >= 0 && correctAnswerIndex < answerList.Count)
+            {
+                // 1. Guarda o texto da resposta correta antes de embaralhar
+                string correctAnswerText = answerList[correctAnswerIndex];
+
+                // 2. Embaralha a lista localmente (Algoritmo de Fisher-Yates)
+                int n = answerList.Count;
+                while (n > 1)
+                {
+                    n--;
+                    int k = UnityEngine.Random.Range(0, n + 1);
+                    string temp = answerList[k];
+                    answerList[k] = answerList[n];
+                    answerList[n] = temp;
+                }
+
+                Answers = answerList;
+                // 3. Busca a nova posição da resposta correta e salva como o novo ID válido
+                CorrectAnswerIndex = answerList.IndexOf(correctAnswerText);
+            }
+            else
+            {
+                // Fallback de segurança
+                Answers = answerList;
+                CorrectAnswerIndex = correctAnswerIndex;
+            }
         }
 
         public bool IsCorrect(int answerIndex) => answerIndex == CorrectAnswerIndex;

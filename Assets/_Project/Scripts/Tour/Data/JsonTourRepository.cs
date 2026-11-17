@@ -3,14 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
+using OdisseiaVR.Core;
 
 namespace OdisseiaVR.Tour.Data
 {
-    /// <summary>
-    /// Lê o tour_data.json (parse único) e carrega assets de Resources sob demanda.
-    /// Diferente do TourDataManager antigo, NÃO carrega todos os locais de uma vez:
-    /// no Quest 2 isso mantinha todos os vídeos e panoramas na RAM.
-    /// </summary>
     public sealed class JsonTourRepository : ITourRepository
     {
         private readonly List<DadosLocalJson> locais;
@@ -25,7 +21,7 @@ namespace OdisseiaVR.Tour.Data
 
         public int LocationCount => locais.Count;
 
-        public string GetLocationName(int index) => locais[index].locationName;
+        public string GetLocationName(int index) => ResolveText(locais[index].locationName);
 
         public IEnumerator LoadSummariesAsync(Action<IReadOnlyList<LocationSummary>> onLoaded)
         {
@@ -35,7 +31,7 @@ namespace OdisseiaVR.Tour.Data
             {
                 Texture map = null;
                 yield return LoadAsset<Texture>(local.mapImagePath, asset => map = asset);
-                result.Add(new LocationSummary(local.locationName, map));
+                result.Add(new LocationSummary(ResolveText(local.locationName), map));
             }
 
             onLoaded(result);
@@ -60,7 +56,6 @@ namespace OdisseiaVR.Tour.Data
 
             foreach (DesafioJson desafio in desafios)
             {
-                // Regra de negócio centralizada aqui: videoPath preenchido => vídeo; senão => quiz.
                 if (!string.IsNullOrWhiteSpace(desafio.videoPath))
                 {
                     VideoClip clip = null;
@@ -71,37 +66,74 @@ namespace OdisseiaVR.Tour.Data
                 {
                     Material panorama = null;
                     yield return LoadAsset<Material>(desafio.panoramaMaterialPath, asset => panorama = asset);
+
+                    var hotspotsDomainList = ParseHotspots(desafio.hotspots);
+                    var translatedAnswers = ParseAnswers(desafio.answers);
+
                     challenges.Add(new QuizChallenge(
-                        desafio.initialYRotation, panorama, desafio.questionText,
-                        desafio.answers, desafio.correctAnswerIndex,
-                        MapHotspots(desafio.hotspots)));
+                        desafio.initialYRotation,
+                        panorama,
+                        ResolveText(desafio.questionText),
+                        translatedAnswers,
+                        desafio.correctAnswerIndex,
+                        hotspotsDomainList));
                 }
             }
 
-            onLoaded(new TourLocation(dto.locationName, music, challenges));
-        }
-
-        // Converte os DTOs do JSON no modelo de domínio. Lista nula (ex.: desafios de vídeo) vira lista vazia.
-        private static List<HotspotData> MapHotspots(List<HotspotJson> source)
-        {
-            var result = new List<HotspotData>();
-            if (source == null) return result;
-
-            foreach (HotspotJson h in source)
-            {
-                Vector3 position = h.position != null
-                    ? new Vector3(h.position.x, h.position.y, h.position.z)
-                    : Vector3.zero;
-
-                result.Add(new HotspotData(h.id, h.title, h.description, position, h.imagePath));
-            }
-            return result;
+            onLoaded(new TourLocation(ResolveText(dto.locationName), music, challenges));
         }
 
         public IEnumerator ReleaseAssetsAsync()
         {
             yield return Resources.UnloadUnusedAssets();
             GC.Collect();
+        }
+
+        // Extrai o texto no idioma atual com fallback para PT
+        private static string ResolveText(LocalizedTextJson textObj)
+        {
+            if (textObj == null) return string.Empty;
+
+            return LocalizationManager.CurrentLanguage switch
+            {
+                AppLanguage.EN => !string.IsNullOrWhiteSpace(textObj.en) ? textObj.en : textObj.pt,
+                AppLanguage.ES => !string.IsNullOrWhiteSpace(textObj.es) ? textObj.es : textObj.pt,
+                _ => textObj.pt ?? string.Empty
+            };
+        }
+
+        private static List<string> ParseAnswers(List<LocalizedTextJson> dtos)
+        {
+            var result = new List<string>();
+            if (dtos == null) return result;
+
+            foreach (var ans in dtos)
+            {
+                result.Add(ResolveText(ans));
+            }
+            return result;
+        }
+
+        private static List<HotspotData> ParseHotspots(List<HotspotJson> dtos)
+        {
+            var result = new List<HotspotData>();
+            if (dtos == null || dtos.Count == 0) return result;
+
+            foreach (var h in dtos)
+            {
+                Vector3 pos = h.position != null
+                    ? new Vector3(h.position.x, h.position.y, h.position.z)
+                    : Vector3.zero;
+
+                result.Add(new HotspotData(
+                    h.id,
+                    ResolveText(h.title),
+                    ResolveText(h.description),
+                    pos,
+                    h.imagePath));
+            }
+
+            return result;
         }
 
         private static IEnumerator LoadAsset<T>(string path, Action<T> onLoaded) where T : UnityEngine.Object
@@ -124,7 +156,6 @@ namespace OdisseiaVR.Tour.Data
             onLoaded(asset);
         }
 
-        // Resources.Load não aceita extensão no caminho.
         private static string SanitizePath(string original)
         {
             if (string.IsNullOrWhiteSpace(original)) return string.Empty;

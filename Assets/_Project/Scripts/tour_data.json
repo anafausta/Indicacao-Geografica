@@ -1,42 +1,58 @@
 {
-  "locais": [  
+  "locais": [
     {
-      "locationName": "IP Vale da Grama - São Sebastião da Grama",
+      "locationName": {
+        "pt": "IP Vale da Grama - São Sebastião da Grama",
+        "en": "Vale da Grama GI - São Sebastião da Grama",
+        "es": "IG Vale da Grama - São Sebastião da Grama"
+      },
       "backgroundMusicPath": "Audio/trilhasonora_cafe",
       "mapImagePath": "UI/Mapas/mapa_cafe",
       "desafios": [
         {
-          "panoramaMaterialPath": "",
-          "videoPath": "Video/Video_Prefeito",
-          "initialYRotation": 0.0,
-          "questionText": "",
-          "answers": [],
-          "correctAnswerIndex": -1
-        },
-        {
-          "panoramaMaterialPath": "",
-          "videoPath": "Video/Video_cafeicultores",
-          "initialYRotation": 0.0,
-          "questionText": "",
-          "answers": [],
-          "correctAnswerIndex": -1
-        },
-        {
           "panoramaMaterialPath": "Materials/Cafe/Cafe001",
-          "initialYRotation": 180,
-          "questionText": "Qual organização liderou o projeto de conquista da IG para os cafeicultores locais?",
+          "initialYRotation": 0,
+          "questionText": {
+            "pt": "Qual organização liderou o projeto de conquista da IG para os cafeicultores locais?",
+            "en": "Which organization led the project to obtain the GI for local coffee growers?",
+            "es": "¿Qué organización lideró el proyecto para obtener la IG para los caficultores locales?"
+          },
           "answers": [
-            "Associação dos Cafeicultores do Vale da Grama",
-            "Cooperativa Regional dos Produtores de Grama",
-            "Sindicato Rural de São Sebastião"
+            {
+              "pt": "Associação dos Cafeicultores do Vale da Grama",
+              "en": "Vale da Grama Coffee Growers Association",
+              "es": "Asociación de Caficultores de Vale da Grama"
+            },
+            {
+              "pt": "Cooperativa Regional dos Produtores de Grama",
+              "en": "Regional Cooperative of Grama Producers",
+              "es": "Cooperativa Regional de Productores de Grama"
+            },
+            {
+              "pt": "Sindicato Rural de São Sebastião",
+              "en": "Rural Union of São Sebastião",
+              "es": "Sindicato Rural de São Sebastião"
+            }
           ],
           "correctAnswerIndex": 0,
           "hotspots": [
             {
               "id": "info_associacao",
-              "title": "Associação dos Cafeicultores",
-              "description": "Sede da Associação responsável pela conquista e gestão do selo de Indicação Geográfica (IP Vale da Grama).",
-              "position": { "x": 2.5, "y": 1.0, "z": 3.5 },
+              "title": {
+                "pt": "Associação dos Cafeicultores do Vale da Grama",
+                "en": "Coffee Growers Association of Vale da Grama",
+                "es": "Asociación de Caficultores del Valle de Grama"
+              },
+              "description": {
+                "pt": "Em dezembro de 2024, o café produzido na região recebeu o reconhecimento de Indicação Geográfica, na modalidade Indicação de Procedência, concedido pelo Instituto Nacional da Propriedade Industrial (INPI). Esse reconhecimento valoriza a tradição cafeeira local e reforça a relação entre a produção, a história das famílias produtoras e o território onde o café é cultivado.",
+                "en": "In December 2024, the coffee produced in the region received Geographical Indication recognition under the Indication of Source category, granted by the National Institute of Industrial Property (INPI). This recognition values local coffee-growing traditions and reinforces the bond between production, the history of farming families, and the territory where the coffee is cultivated.",
+                "es": "En diciembre de 2024, el café producido en la región recibió el reconocimiento de Indicación Geográfica, en la modalidad de Indicación de Procedencia, otorgado por el Instituto Nacional de la Propiedad Industrial (INPI). Este reconocimiento valora la tradición cafetera local y refuerza la relación entre la producción, la historia de las familias productoras y el territorio donde se cultiva el café."
+              },
+              "position": {
+                "x": 1.1,
+                "y": 1.1,
+                "z": 2.4
+              },
               "imagePath": ""
             }
           ]
@@ -44,55 +60,191 @@
         {
           "panoramaMaterialPath": "Materials/Cafe/Cafe002",
           "initialYRotation": 180,
-          "questionText": "Qual o nome do selo de Indicação Geográfica (IG) do café de São Sebastião da Grama?",
+          "questionText": {
+            "pt": "Qual o nome do selo de Indicação Geográfica (IG) do café de São Sebastião da Grama?",
+            "en": "What is the name of the Geographical Indication (GI) seal for coffee from São Sebastião da Grama?",
+            "es": "¿Cuál es el nombre del sello de Indicación Geográfica (IG) del café de São Sebastião da Grama?"
+          },
           "answers": [
-            "Planalto de Grama",
-            "Terras Altas da Mogiana",
-            "Vale da Grama"
+            {
+              "pt": "Planalto de Grama",
+              "en": "Grama Plateau",
+              "es": "Meseta de Grama"
+            },
+            {
+              "pt": "Terras Altas da Mogiana",
+              "en": "Mogiana Highlands",
+              "es": "Tierras Altas de Mogiana"
+            },
+            {
+              "pt": "Vale da Grama",
+              "en": "Vale da Grama",
+              "es": "Vale da Grama"
+            }
           ],
           "correctAnswerIndex": 2,
-          "hotspots": []
+          "hotspots": [
+            {
+              "id": "info_secretaria_turismo",
+              "title": {
+                "pt": "Secretaria de Turismo e Cultura",
+                "en": "Tourism and Culture Department",
+                "es": "Secretaría de Turismo y Cultura"
+              },
+              "description": {
+                "pt": "A Secretaria de Turismo e Cultura de São Sebastião da Grama atua como o ponto de recepção e apoio ao visitante, promovendo a divulgação das riquezas históricas, culturais e do patrimônio cafeeiro do município. O espaço reúne materiais informativos e orientações sobre a Indicação de Procedência Vale da Grama e as atrações turísticas locais, conectando os visitantes à identidade do território.",
+                "en": "The Tourism and Culture Department of São Sebastião da Grama serves as a reception and support center for visitors, promoting the municipality's historical, cultural, and coffee heritage. The space provides informational materials and guidance on the Vale da Grama Origin Indication and local tourist attractions, connecting visitors with the identity of the territory.",
+                "es": "La Secretaría de Turismo y Cultura de São Sebastião da Grama actúa como punto de recepción y apoyo al visitante, promoviendo la difusión de las riquezas históricas, culturales y del patrimonio cafetero del municipio. El espacio reúne materiales informativos y orientación sobre la Indicación de Procedencia Vale da Grama y las atracciones turísticas locales, conectando a los visitantes con la identidad del territorio."
+              },
+              "position": {
+                "x": -1.2,
+                "y": 1.1,
+                "z": 2.4
+              },
+              "imagePath": "UI/Mapas/mapa_cafe"
+            }
+          ]
         },
         {
           "panoramaMaterialPath": "Materials/Cafe/Cafe003",
           "initialYRotation": 180,
-          "questionText": "Antes da emancipação em 1925, como a região era conhecida por suas pastagens naturais?",
+          "questionText": {
+            "pt": "Antes da emancipação em 1925, como a região era conhecida por suas pastagens naturais?",
+            "en": "Before emancipation in 1925, how was the region known for its natural pastures?",
+            "es": "Antes de la emancipación en 1925, ¿cómo era conocida la región por sus pastos naturales?"
+          },
           "answers": [
-            "Rancho Verde",
-            "Parada das Tropas",
-            "Pouso de Grama"
+            {
+              "pt": "Rancho Verde",
+              "en": "Green Ranch",
+              "es": "Rancho Verde"
+            },
+            {
+              "pt": "Parada das Tropas",
+              "en": "Troop Stop",
+              "es": "Parada de las Tropas"
+            },
+            {
+              "pt": "Pouso de Grama",
+              "en": "Pouso de Grama",
+              "es": "Pouso de Grama"
+            }
           ],
           "correctAnswerIndex": 2,
-          "hotspots": []
+          "hotspots": [
+            {
+              "id": "info_museu_arakem_cruz",
+              "title": {
+                "pt": "Centro Cultural Arakén Cruz",
+                "en": "Arakén Cruz Cultural Center",
+                "es": "Centro Cultural Arakén Cruz"
+              },
+              "description": {
+                "pt": "O Centro Cultural Arakén Cruz reúne diferentes registros da história de São Sebastião da Grama. Seu acervo inclui objetos antigos, documentos históricos e materiais relacionados ao futebol local, como troféus e camisetas de equipes de diferentes épocas. O espaço ajuda a preservar lembranças e aspectos da vida cotidiana das gerações que construíram a identidade do município.",
+                "en": "The Arakén Cruz Cultural Center gathers various records of São Sebastião da Grama's history. Its collection includes vintage objects, historical documents, and materials related to local soccer, such as trophies and team jerseys from different eras. The space helps preserve memories and aspects of daily life of the generations that built the municipality's identity.",
+                "es": "The Arakén Cruz Cultural Center gathers various records of São Sebastião da Grama's history. Its collection includes vintage objects, historical documents, and materials related to local soccer, such as trophies and team jerseys from different eras. The space helps preserve memories and aspects of daily life of the generations that built the municipality's identity."
+              },
+              "position": {
+                "x": 1.4,
+                "y": 1.0,
+                "z": 2.3
+              },
+              "imagePath": ""
+            }
+          ]
         },
         {
           "panoramaMaterialPath": "Materials/Cafe/Cafe004",
           "initialYRotation": 180,
-          "questionText": "O que a localização elevada do Cristo Redentor representa para São Sebastião da Grama?",
+          "questionText": {
+            "pt": "O que a localização elevada do Cristo Redentor representa para São Sebastião da Grama?",
+            "en": "What does the elevated location of Christ the Redeemer represent for São Sebastião da Grama?",
+            "es": "¿Qué representa la ubicación elevada del Cristo Redentor para São Sebastião da Grama?"
+          },
           "answers": [
-            "Praticidade",
-            "Proteção",
-            "Isolamento"
+            {
+              "pt": "Praticidade",
+              "en": "Practicality",
+              "es": "Practicidad"
+            },
+            {
+              "pt": "Proteção",
+              "en": "Protection",
+              "es": "Protección"
+            },
+            {
+              "pt": "Isolamento",
+              "en": "Isolation",
+              "es": "Aislamiento"
+            }
           ],
           "correctAnswerIndex": 1,
-          "hotspots": []
+          "hotspots": [
+            {
+              "id": "info_cristo_redentor",
+              "title": {
+                "pt": "Mirante do Cristo Redentor",
+                "en": "Christ the Redeemer Viewpoint",
+                "es": "Mirante del Cristo Redentor"
+              },
+              "description": {
+                "pt": "O nome de São Sebastião da Grama passou por mudanças ao longo da história. Quando a povoação se tornou distrito, em 1896, passou a ser chamada oficialmente de Grama. Essa denominação permaneceu durante a criação do município, em 1925. Em 24 de março de 1948, o nome São Sebastião da Grama foi restaurado, retomando a denominação ligada à trajetória histórica do município.",
+                "en": "The name of São Sebastião da Grama underwent changes throughout history. When the settlement became a district in 1896, it was officially named Grama. This name remained when the municipality was created in 1925. On March 24, 1948, the name São Sebastião da Grama was restored, reclaiming the denomination tied to the municipality's historical trajectory.",
+                "es": "El nombre de São Sebastião da Grama sufrió cambios a lo largo de la historia. Cuando el poblado se convirtió en distrito en 1896, pasó a llamarse oficialmente Grama. Esta denominación se mantuvo durante la creación del municipio en 1925. El 24 de marzo de 1948, se restauró el nombre São Sebastião da Grama, retomando la denominación vinculada a la trayectoria histórica del municipio."
+              },
+              "position": {
+                "x": 1.1,
+                "y": 1.3,
+                "z": 2.4
+              },
+              "imagePath": ""
+            }
+          ]
         },
         {
           "panoramaMaterialPath": "Materials/Cafe/Cafe005",
           "initialYRotation": 180,
-          "questionText": "No contexto da cidade, qual é a importância da Praça da Matriz, onde a igreja está localizada?",
+          "questionText": {
+            "pt": "No contexto da cidade, qual é a importância da Praça da Matriz, onde a igreja está localizada?",
+            "en": "In the context of the city, what is the importance of Praça da Matriz, where the church is located?",
+            "es": "En el contexto de la ciudad, ¿cuál es la importancia de la Plaza de la Matriz, donde se encuentra la iglesia?"
+          },
           "answers": [
-            "Centro geográfico e histórico",
-            "Área de preservação ambiental",
-            "Sem importância social"
+            {
+              "pt": "Centro geográfico e histórico",
+              "en": "Geographic and historical center",
+              "es": "Centro geográfico e histórico"
+            },
+            {
+              "pt": "Área de preservação ambiental",
+              "en": "Environmental preservation area",
+              "es": "Área de preservación ambiental"
+            },
+            {
+              "pt": "Sem importância social",
+              "en": "No social importance",
+              "es": "Sin importancia social"
+            }
           ],
           "correctAnswerIndex": 0,
           "hotspots": [
             {
               "id": "info_paroquia",
-              "title": "Paróquia São Sebastião",
-              "description": "Fundada no século XX, a Paróquia é o centro histórico e religioso do município de São Sebastião da Grama.",
-              "position": { "x": -3.2, "y": 1.2, "z": 2.8 },
+              "title": {
+                "pt": "Paróquia São Sebastião",
+                "en": "São Sebastião Parish",
+                "es": "Parroquia San Sebastián"
+              },
+              "description": {
+                "pt": "A história de São Sebastião da Grama também está ligada à construção de seus espaços religiosos. Em 1877, foi edificada uma capela dedicada a São Sebastião, e a povoação passou a adotar o nome que mantém até hoje. Décadas depois, a construção da igreja matriz tornou-se outro marco da história local, com obras realizadas entre 1904 e 1908.",
+                "en": "The history of São Sebastião da Grama is also linked to the construction of its religious spaces. In 1877, a chapel dedicated to Saint Sebastian was built, and the settlement adopted the name it keeps today. Decades later, the construction of the main church became another milestone in local history, built between 1904 and 1908.",
+                "es": "La historia de São Sebastião da Grama también está ligada a la construcción de sus espacios religiosos. En 1877, se edificó una capilla dedicada a San Sebastián, y el poblado adoptó el nombre que conserva hasta hoy. Décadas después, la construcción de la iglesia matriz se convirtió en otro hito de la historia local, con obras realizadas entre 1904 y 1908."
+              },
+              "position": {
+                "x": -1.3,
+                "y": 1.1,
+                "z": 2.4
+              },
               "imagePath": ""
             }
           ]
@@ -100,14 +252,50 @@
         {
           "panoramaMaterialPath": "Materials/Cafe/Cafe006",
           "initialYRotation": 180,
-          "questionText": "Em qual tipo de solo raro o café da região é cultivado?",
+          "questionText": {
+            "pt": "Em qual tipo de solo raro o café da região é cultivado?",
+            "en": "In what rare type of soil is the region's coffee grown?",
+            "es": "¿En qué tipo raro de suelo se cultiva el café de la región?"
+          },
           "answers": [
-            "Solo de massapê",
-            "Solo de origem vulcânica",
-            "Solo de várzea arenosa"
+            {
+              "pt": "Solo de massapê",
+              "en": "Massapê soil",
+              "es": "Suelo de massapê"
+            },
+            {
+              "pt": "Solo de origem vulcânica",
+              "en": "Soil of volcanic origin",
+              "es": "Suelo de origen volcánico"
+            },
+            {
+              "pt": "Solo de várzea arenosa",
+              "en": "Sandy floodplain soil",
+              "es": "Suelo de llanura arenosa"
+            }
           ],
           "correctAnswerIndex": 1,
-          "hotspots": []
+          "hotspots": [
+            {
+              "id": "info_cafezal",
+              "title": {
+                "pt": "Cafezal",
+                "en": "Coffee Plantation",
+                "es": "Cafetal"
+              },
+              "description": {
+                "pt": "Os cafezais da região se desenvolvem em altitudes superiores a 1.000 metros, onde os dias quentes e as noites frias favorecem a maturação lenta dos grãos. Essas condições contribuem para a formação de cafés de sabor equilibrado, com notas cítricas marcantes. A história do café na região remonta ao século XIX, com registros como os de Benedito Ferreira de Andrade (Dito Bandeira) em 1878 e a tulha da Fazenda São João de Cima construída em 1908.",
+                "en": "The region's coffee plantations thrive at altitudes above 1,000 meters, where warm days and cool nights foster a slow ripening of the beans. These conditions contribute to producing well-balanced coffees with striking citrus notes. Coffee history in the region dates back to the 19th century, with records such as those of Benedito Ferreira de Andrade (Dito Bandeira) in 1878 and the storage building ('tulha') at Fazenda São João de Cima built in 1908.",
+                "es": "Los cafetales de la región se desarrollan a altitudes superiores a 1.000 metros, donde los días cálidos y las noches frías favorecen la maduración lenta de los granos. Estas condiciones contribuyen a la formación de cafés de sabor equilibrado, con destacadas notas cítricas. La historia del café en la región se remonta al siglo XIX, con registros como los de Benedito Ferreira de Andrade (Dito Bandeira) en 1878 y la bodega de almacenamiento ('tulha') de la Fazenda São João de Cima construida en 1908."
+              },
+              "position": {
+                "x": 1.2,
+                "y": 1.0,
+                "z": 2.3
+              },
+              "imagePath": ""
+            }
+          ]
         }
       ]
     }

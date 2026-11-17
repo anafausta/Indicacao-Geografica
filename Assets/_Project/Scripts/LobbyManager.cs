@@ -51,6 +51,8 @@ namespace OdisseiaVR.Lobby
             if (nextButton != null) nextButton.onClick.AddListener(ShowNext);
             if (previousButton != null) previousButton.onClick.AddListener(ShowPrevious);
             if (startTourButton != null) startTourButton.onClick.AddListener(StartSelectedTour);
+
+            LocalizationManager.OnLanguageChanged += OnLanguageChanged;
         }
 
         private void OnDisable()
@@ -58,6 +60,8 @@ namespace OdisseiaVR.Lobby
             if (nextButton != null) nextButton.onClick.RemoveListener(ShowNext);
             if (previousButton != null) previousButton.onClick.RemoveListener(ShowPrevious);
             if (startTourButton != null) startTourButton.onClick.RemoveListener(StartSelectedTour);
+            
+            LocalizationManager.OnLanguageChanged -= OnLanguageChanged;
         }
 
         private IEnumerator Start()
@@ -80,6 +84,11 @@ namespace OdisseiaVR.Lobby
             yield return AppContext.SceneLoader.Reveal(fadeDuration);
         }
 
+        private void OnLanguageChanged(AppLanguage newLang)
+        {
+            Refresh();
+        }        
+        
         private void ShowNext() => Step(+1);
 
         private void ShowPrevious() => Step(-1);
@@ -99,6 +108,10 @@ namespace OdisseiaVR.Lobby
             LocationSummary location = locations[currentIndex];
             if (locationNameText != null) locationNameText.text = location.Name;
             if (mapDisplayImage != null) mapDisplayImage.texture = location.MapTexture;
+
+            // Busca o nome já traduzido no repositório conforme o idioma atual
+            if (locationNameText != null) locationNameText.text = repository.GetLocationName(currentIndex);
+            if (mapDisplayImage != null) mapDisplayImage.texture = location.MapTexture;
         }
 
         public void StartSelectedTour()
@@ -114,10 +127,18 @@ namespace OdisseiaVR.Lobby
 
         private IEnumerator LoadTourScene()
         {
+            string currentLocationName = repository.GetLocationName(currentIndex);
+            string messageTemplate = LocalizationManager.CurrentLanguage switch
+            {
+                AppLanguage.EN => $"Loading portal to:\n{currentLocationName}\nProgress: {{progress}}%",
+                AppLanguage.ES => $"Cargando portal hacia:\n{currentLocationName}\nProgreso: {{progress}}%",
+                _ => $"A carregar portal para:\n{currentLocationName}\nProgresso: {{progress}}%"
+            };
+
             var request = new SceneLoadRequest
             {
                 SceneName = tourSceneName,
-                MessageTemplate = $"A carregar portal para:\n{locations[currentIndex].Name}\nProgresso: {{progress}}%",
+                MessageTemplate = messageTemplate,
                 FadeOutDuration = fadeDuration,
                 RevealDuration = fadeDuration,
                 HoldSeconds = loadHoldSeconds

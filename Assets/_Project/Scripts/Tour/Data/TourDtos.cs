@@ -3,8 +3,13 @@ using System.Collections.Generic;
 
 namespace OdisseiaVR.Tour.Data
 {
-    // DTOs espelham o tour_data.json (que não muda). Só o repositório os conhece.
-    // O resto do projeto trabalha com o modelo de domínio (TourModels.cs).
+    [Serializable]
+    internal class LocalizedTextJson
+    {
+        public string pt;
+        public string en;
+        public string es;
+    }
 
     [Serializable]
     internal class Vector3Json
@@ -18,8 +23,8 @@ namespace OdisseiaVR.Tour.Data
     internal class HotspotJson
     {
         public string id;
-        public string title;
-        public string description;
+        public LocalizedTextJson title;
+        public LocalizedTextJson description;
         public Vector3Json position;
         public string imagePath;
     }
@@ -30,16 +35,16 @@ namespace OdisseiaVR.Tour.Data
         public string panoramaMaterialPath;
         public string videoPath;
         public float initialYRotation;
-        public string questionText;
-        public List<string> answers;
+        public LocalizedTextJson questionText;
+        public List<LocalizedTextJson> answers;
         public int correctAnswerIndex;
-        public List<HotspotJson> hotspots; // Campo adicionado para os hotspots
+        public List<HotspotJson> hotspots;
     }
 
     [Serializable]
     internal class DadosLocalJson
     {
-        public string locationName;
+        public LocalizedTextJson locationName;
         public string backgroundMusicPath;
         public string mapImagePath;
         public List<DesafioJson> desafios;
