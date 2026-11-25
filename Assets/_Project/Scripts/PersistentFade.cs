@@ -6,18 +6,10 @@ using UnityEngine.UI;
 
 namespace OdisseiaVR.Core
 {
-    /// <summary>
-    /// View do overlay de fade. Só desenha e anima: não conhece cenas, nem quem o chama.
-    /// Criado pelo AppContext e persistente (DontDestroyOnLoad).
-    ///
-    /// MUDANÇA IMPORTANTE: o objeto NÃO é mais filho da câmera da cena. Ser reparentado para
-    /// uma câmera de cena o move para dentro dessa cena e ele pode ser destruído junto com ela.
-    /// Agora ele permanece na raiz persistente e segue a câmera no LateUpdate.
-    /// </summary>
     public sealed class PersistentFade : MonoBehaviour, IScreenOverlay
     {
-        [SerializeField] private Vector3 cameraOffset = new Vector3(0f, 0f, 0.4f);
-        [SerializeField] private float worldScale = 0.0008f; // ajuste testando no Quest
+        [SerializeField] private Vector3 cameraOffset = new Vector3(0f, 0f, 2.0f); // 2 metros à frente da câmera
+        [SerializeField] private float worldScale = 0.0024f;
 
         private static readonly Vector2 CanvasSize = new Vector2(1920f, 1080f);
 
@@ -27,7 +19,6 @@ namespace OdisseiaVR.Core
         private GameObject progressBar;
         private Image progressFill;
 
-        // Canvases de cena escondidos durante a tela preta, para restaurar depois.
         private readonly List<Canvas> hiddenCanvases = new List<Canvas>();
 
         private void Awake()
@@ -106,7 +97,6 @@ namespace OdisseiaVR.Core
             fadeImage.color = c;
         }
 
-        // Desabilitar só o Canvas (e não o GameObject) mantém corrotinas e LateUpdate funcionando.
         private void SetVisible(bool visible) => canvas.enabled = visible;
 
         private void HideAllSceneUi()
@@ -141,27 +131,28 @@ namespace OdisseiaVR.Core
 
             gameObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
 
+            // Fundo preto ampliado para cobrir 100% da visão periférica mesmo a 2m de distância
             RectTransform fadeRect = CreateChild("FadeImage");
             fadeImage = fadeRect.gameObject.AddComponent<Image>();
             fadeImage.color = new Color(0f, 0f, 0f, 0f);
-            Stretch(fadeRect);
+            fadeRect.sizeDelta = new Vector2(12000f, 12000f);
 
             RectTransform messageRect = CreateChild("FadeMessage");
             messageText = messageRect.gameObject.AddComponent<TextMeshProUGUI>();
             messageText.color = Color.white;
             messageText.alignment = TextAlignmentOptions.Center;
-            messageText.enableWordWrapping = true;
+            messageText.textWrappingMode = TextWrappingModes.Normal;
             messageText.raycastTarget = false;
-            messageText.fontSize = 48;
-            messageRect.sizeDelta = new Vector2(1000f, 400f);
+            messageText.fontSize = 42;
+            messageRect.sizeDelta = new Vector2(1200f, 400f);
             messageText.gameObject.SetActive(false);
 
             RectTransform barRect = CreateChild("ProgressBarBackground");
             Image barBackground = barRect.gameObject.AddComponent<Image>();
             barBackground.color = new Color(1f, 1f, 1f, 0.15f);
             barBackground.raycastTarget = false;
-            barRect.sizeDelta = new Vector2(800f, 40f);
-            barRect.anchoredPosition = new Vector2(0f, -260f);
+            barRect.sizeDelta = new Vector2(800f, 32f);
+            barRect.anchoredPosition = new Vector2(0f, -220f);
             progressBar = barRect.gameObject;
 
             var fillRect = new GameObject("ProgressBarFill", typeof(RectTransform)).GetComponent<RectTransform>();

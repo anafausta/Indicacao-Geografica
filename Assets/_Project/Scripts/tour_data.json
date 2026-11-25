@@ -10,6 +10,22 @@
       "mapImagePath": "UI/Mapas/mapa_cafe",
       "desafios": [
         {
+          "panoramaMaterialPath": "",
+          "videoPath": "Video/Video_Prefeito",
+          "initialYRotation": 0.0,
+          "questionText": "",
+          "answers": [],
+          "correctAnswerIndex": -1
+        },
+        {
+          "panoramaMaterialPath": "",
+          "videoPath": "Video/Video_cafeicultores",
+          "initialYRotation": 0.0,
+          "questionText": "",
+          "answers": [],
+          "correctAnswerIndex": -1
+        },
+        {
           "panoramaMaterialPath": "Materials/Cafe/Cafe001",
           "initialYRotation": 0,
           "questionText": {
